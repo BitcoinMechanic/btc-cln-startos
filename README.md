@@ -359,3 +359,86 @@ health_checks:
   - vpn-tunnel # displayed "Clearnet VPN"; only while a tunnel is configured; last-handshake age
   - restored # only after an emergency recovery
 ```
+
+
+## Experimental BTC swap image preparation
+
+This development branch adds an inert Python swap-module bundle from
+`BitcoinMechanic/lightning` commit
+`81ba4099a63e5a0e83f55cead53c54f2a1b3c1fe`, matching the XBT package.
+The BTC daemon remains upstream CLN v26.06.8; the existing UI and wrapper
+configuration are retained. Swap files are outside automatic plugin discovery.
+No swap gate, quote API, controller or additional listener is enabled.
+
+This first patch is an image build checkpoint only. It does not change the
+package version or authorize installation over an existing CLN wallet. Build
+and test the image before the package-version and controller-pairing work.
+Existing package ID `c-lightning` is retained: this is not a side-by-side
+installation alongside another `c-lightning` package on the same StartOS box.
+
+From the packaging VM, build and check without a backend or wallet:
+
+```sh
+docker buildx build --builder startos-builder --platform linux/amd64 \
+  --load -f Dockerfile -t btc-cln:swap-preparation .
+docker run --rm --network none btc-cln:swap-preparation \
+  python3 /usr/local/libexec/check-btc-swap-bundle.py
+```
+
+The build checks the source pin, Python imports, CLN/bitcoin-cli executables
+and gate manifests. These checks do not establish funded-swap compatibility
+with upstream CLN. A separate disposable regtest must verify that before
+live gate activation or controller pairing. Do not manually load the bundled
+gates against a live wallet. Ordinary-node backup behavior is unchanged;
+recovery of active swap state is not established by this image check.
+
+
+### Funded BTC gate compatibility test
+
+Run the packaged upstream BTC daemon and two disposable nodes with the bundled
+quote gate. The mounted Knots binary runs ordinary BTC regtest with BLAKE2b
+activation omitted. Docker has no external network and no production volumes.
+
+```sh
+bash scripts/test-btc-gate.sh btc-cln:swap-preparation ../bitcoind
+bash scripts/test-btc-gate.sh btc-cln:swap-preparation ../bitcoind --fail
+```
+
+These tests fund a private channel, hold a signed BTC invoice, restart the
+coordinator, and verify the original hook binding and final channel balances.
+The success case also checks an outgoing BTC sendpay/waitsendpay and its
+preimage. The failure case returns the original channel balances. This is a
+BTC compatibility test only: the XBT invoice is a clearly marked fixture,
+there is no XBT leg, and no live activation or market pricing is tested.
+Logs remain under the printed disposable directory. No image rebuild is
+needed for this harness-only patch.
+
+
+### Combined packaged-binary controller regtests
+
+```sh
+bash scripts/test-image-pair.sh \
+  btc-cln:swap-preparation xbt-cln:recovery-test ../bitcoind
+```
+
+The launcher resolves both local image IDs, copies the XBT image's installed
+`/usr/local` tree without starting it, and mounts that tree read-only at
+`/opt/xbt` in the BTC test container. CLN finds its matching subdaemons and
+builtin plugins relative to its executable. Both image versions and the XBT
+source receipt are checked; the controller modules come from the pinned BTC
+swap bundle. This tests the packaged binaries together in one Debian runtime,
+not StartOS networking or cross-box RPC transport. No new image build is needed.
+
+Four scenarios run sequentially: forward success, forward rejection, reverse
+success and reverse rejection. Each uses the existing pinned controller
+fixture with operator restarts while HTLCs are pending, recovery of the
+original payment, and balance/settlement assertions. Quote rates are fixed
+regtest fixtures, not oracle quotes. Use an optional final argument `forward`,
+`forward-failure`, `reverse` or `reverse-failure` to select one scenario.
+
+Docker has no external network. Only the backend executable, extracted XBT
+binaries, test script and fresh results directory are mounted; no live data
+or Docker socket enters the container. The Knots binary supplies two isolated
+backends: ordinary BTC regtest and activated XBT regtest. Temporary extracted
+binaries are removed at exit, while test logs remain at the printed path.
+This does not activate a gate on either installed StartOS node.

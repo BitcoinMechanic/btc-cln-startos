@@ -142,6 +142,18 @@ RUN set -eu; \
     tar -xf "$TARBALL" "bitcoin-${BITCOIN_VERSION}/bin/bitcoin-cli"; \
     install -m 755 "bitcoin-${BITCOIN_VERSION}/bin/bitcoin-cli" /usr/bin/bitcoin-cli
 
+# The swap bundle shares the XBT package's immutable source pin. It is inert.
+FROM base AS swap-source
+RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /src/swap
+RUN git init && \
+    git remote add origin https://github.com/BitcoinMechanic/lightning.git && \
+    git fetch --depth=1 origin 81ba4099a63e5a0e83f55cead53c54f2a1b3c1fe && \
+    git checkout --detach FETCH_HEAD && \
+    test "$(git rev-parse HEAD)" = 81ba4099a63e5a0e83f55cead53c54f2a1b3c1fe && \
+    git rev-parse HEAD > tools/blake2b/SOURCE_COMMIT
+
 # Final stage - simplified
 #
 # `ca-certificates` is load-bearing: the slim base carries no CA store, and none
@@ -153,7 +165,7 @@ FROM debian:bookworm-slim AS final
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates libev-dev libcurl4-gnutls-dev libsqlite3-dev libunwind-dev \
-    libpq5 libsodium23 wireguard-tools iptables iproute2 procps && \
+    libpq5 libsodium23 wireguard-tools iptables iproute2 procps python3 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=bitcoin-cli /usr/bin/bitcoin-cli /usr/bin/bitcoin-cli
@@ -162,3 +174,9 @@ COPY --from=clboss /usr/local/bin/clboss /usr/local/libexec/c-lightning/plugins/
 COPY --from=builder-rust /root/.cargo/bin/teos* /usr/local/bin/
 COPY --from=builder-rust /root/.cargo/bin/watchtower-client /usr/local/libexec/c-lightning/plugins/
 COPY --from=sling /usr/local/bin/sling /usr/local/libexec/c-lightning/plugins/
+
+# Keep gates outside automatic plugin discovery. Pairing is a later step.
+COPY --from=swap-source /src/swap/tools/blake2b/ /usr/local/libexec/cln-swap/
+COPY --from=swap-source /src/swap/LICENSE /usr/local/share/cln-swap/LICENSE
+COPY assets/swaps/check_bundle.py /usr/local/libexec/check-btc-swap-bundle.py
+RUN python3 /usr/local/libexec/check-btc-swap-bundle.py
