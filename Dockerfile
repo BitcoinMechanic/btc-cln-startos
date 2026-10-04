@@ -183,3 +183,6 @@ RUN python3 /usr/local/libexec/check-btc-swap-bundle.py
 
 COPY assets/swaps/coordinator.py /usr/local/libexec/btc-coordinator.py
 RUN python3 -m py_compile /usr/local/libexec/btc-coordinator.py
+
+COPY assets/swaps/coordinator.py assets/swaps/read_only_rpc.py assets/swaps/controller_credential.py /usr/local/libexec/btc-controller/
+RUN python3 -m py_compile /usr/local/libexec/btc-controller/*.py

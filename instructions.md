@@ -259,3 +259,48 @@ This is a transport compatibility test, not a deployed controller. It creates
 no live credentials, changes no StartOS interfaces, and enables no live gates.
 The probe rune is deliberately insufficient for swap execution. A later
 controller integration must define and test its separate operational authority.
+
+
+## Dedicated read-only controller credential (26.6.8:7)
+
+Coordinator Preparation now includes Controller Credential Status, Create or
+Show Read-only Controller Credential, and Revoke Read-only Controller
+Credential. Prepare Coordinator must have succeeded before creation/export.
+The creation action requires confirmation and masks the copyable rune. Status
+never returns it. Use this credential only over certificate-verified HTTPS;
+these actions do not create an endpoint, change the existing CLN REST interface,
+or grant swap execution permissions.
+
+The rune permits exactly `getinfo` or `listpeerchannels`, with zero parameters.
+Repeated creation returns the same active rune. A durable `creating` record is
+written before CLN is called; if the reply is lost, further creation is blocked
+for inspection. Do not delete that record to retry. Revocation pins the saved
+rune ID and can reconcile a lost reply. Unrelated runes are not revoked.
+Revoked credentials are not automatically replaced by this initial version.
+
+The private `controller-read-only.json` record stays on the main volume and is
+included in backups. It binds the credential to the node and records intent;
+it is not proof that a credential remains valid or revoked after restoring
+CLN's database. Preparation is invalidated on restore, and the helper checks
+CLN's stored rune and blacklist before export/status/revocation. It refuses a
+missing or changed rune and a saved revocation that is no longer effective.
+Treat a restored node's credentials as requiring inspection; this patch does
+not claim to preserve CLN revocation history through backup restoration.
+
+Validate on the packaging VM before building/installing:
+
+```sh
+python3 tests/test_controller_credential.py -v
+python3 tests/test_read_only_rpc.py -v
+npm run check
+npm run build
+node scripts/check-btc-bundle.cjs
+bash scripts/test-image-pair.sh \
+  btc-cln:swap-preparation xbt-cln:recovery-test ../bitcoind rpc
+```
+
+The image fixture now also exercises the actual BTC credential helper against
+regtest CLN: repeated creation, HTTPS authentication, filtered status, exact
+revocation and repeated revocation. It mounts the helper, so no image rebuild
+is needed for that test. Building the updated StartOS package does require a
+new image; the installed package remains unchanged until then.

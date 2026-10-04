@@ -1,3 +1,4 @@
+import { controllerCredentialStatus, controllerCredentialCreate, controllerCredentialRevoke } from './controllerCredential'
 import { coordinatorStatus, prepareCoordinator } from './coordinator'
 import { sdk } from '../sdk'
 import { experimental } from './config/experimental'
@@ -46,5 +47,8 @@ export const actions = sdk.Actions.of()
   .addAction(clbossUnmanage)
   .addAction(coordinatorStatus)
   .addAction(prepareCoordinator)
+  .addAction(controllerCredentialStatus)
+  .addAction(controllerCredentialCreate)
+  .addAction(controllerCredentialRevoke)
 
 // @TODO generate-lnlink

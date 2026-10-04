@@ -9,6 +9,7 @@ import urllib.error
 import urllib.request
 sys.path.insert(0, '/test-assets')
 from read_only_rpc import Client, ProbeError, RESTRICTIONS
+from controller_credential import Credentials
 from image_pair import PairLab, PIN, check_bundle
 from smoke_regtest import wait_until
 
@@ -83,6 +84,23 @@ def main():
             else: raise AssertionError('Client allowed a write method')
             lab.rpc([*node['cli'],'-k'],'blacklistrune', 'start='+token['unique_id'], 'end='+token['unique_id'])
             rejected(url,ca,'getinfo',token['rune'])
+            if name == 'btc':
+                class FixturePreparation:
+                    def inspect(self):
+                        return dict(node_id=node['id']), dict(prepared=True)
+                def credential_rpc(method, **params):
+                    return lab.rpc([*node['cli'], '-k'], method,
+                        *[k+'='+(v if isinstance(v,str) else json.dumps(v)) for k,v in params.items()])
+                worker=Credentials(node['data'],credential_rpc,FixturePreparation(),network='regtest')
+                credential=worker.create(True)
+                assert worker.create(True)==credential
+                action_client=Client(url,credential['rune'],str(ca))
+                assert action_client.inspect(node['id'],network)['identity_matches']
+                assert worker.status()['phase']=='active' and 'rune' not in worker.status()
+                assert worker.revoke(True)['phase']=='revoked'
+                assert worker.revoke(True)['phase']=='revoked'
+                rejected(url,ca,'getinfo',credential['rune'])
+                print('PASS: BTC credential helper created once, exported verified read-only access, and revoked exact rune; repeated actions safe',flush=True)
             print('PASS: '+name+' verified HTTPS and exact node identity; restricted rune accepts reads, refuses writes/parameters, and revokes',flush=True)
         print('Packaged read-only RPC OK (both images; regtest only; no live interface changes)',flush=True)
     finally: lab.close()
