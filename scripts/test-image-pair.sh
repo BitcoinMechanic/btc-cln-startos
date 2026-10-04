@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
-  echo 'Usage: bash scripts/test-image-pair.sh BTC_IMAGE XBT_IMAGE KNOTS_BITCOIND [forward|forward-failure|reverse|reverse-failure|all]' >&2
+  echo 'Usage: bash scripts/test-image-pair.sh BTC_IMAGE XBT_IMAGE KNOTS_BITCOIND [forward|forward-failure|reverse|reverse-failure|rpc|all]' >&2
   exit 2
 fi
 mode=${4:-all}
-case "$mode" in forward|forward-failure|reverse|reverse-failure|all) ;; *) exit 2 ;; esac
+case "$mode" in forward|forward-failure|reverse|reverse-failure|rpc|all) ;; *) exit 2 ;; esac
 repo=$(cd -- "$(dirname -- "$0")/.." && pwd)
 backend=$(realpath -- "$3")
 test -f "$backend" && test -x "$backend"
@@ -29,11 +29,15 @@ printf 'Disposable logs: %s\nBTC image: %s\nXBT image: %s\n' "$results" "$btc_im
 modes=("$mode")
 if [ "$mode" = all ]; then modes=(forward forward-failure reverse reverse-failure); fi
 for scenario in "${modes[@]}"; do
+  command=(/image_pair.py "$scenario")
+  if [ "$scenario" = rpc ]; then command=(/image_rpc.py); fi
   docker run --rm --network none --init \
     -e BTC_XBT_DISPOSABLE_CONTAINER=1 \
     --mount "type=bind,src=$backend,dst=/test-bitcoind,readonly" \
     --mount "type=bind,src=$prefix,dst=/opt/xbt,readonly" \
     --mount "type=bind,src=$repo/tests/image_pair.py,dst=/image_pair.py,readonly" \
+    --mount "type=bind,src=$repo/tests/image_rpc.py,dst=/image_rpc.py,readonly" \
+    --mount "type=bind,src=$repo/assets/swaps,dst=/test-assets,readonly" \
     --mount "type=bind,src=$results,dst=/results" \
-    --entrypoint /usr/bin/python3 "$btc_image" /image_pair.py "$scenario"
+    --entrypoint /usr/bin/python3 "$btc_image" "${command[@]}"
 done

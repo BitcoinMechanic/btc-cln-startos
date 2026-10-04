@@ -231,3 +231,31 @@ BUILDX_BUILDER=startos-builder make x86
 The artifact is `c-lightning_x86_64.s9pk`. The XBT package is separate and
 unchanged. Before installation, confirm the target box does not already
 have a Core Lightning wallet that this same-ID package would replace.
+
+
+## Read-only controller transport proof
+
+The optional `rpc` image-pair fixture tests CLN REST over certificate-verified
+HTTPS using a separate restricted rune for each disposable node. The rune
+permits only `getinfo` and `listpeerchannels`, with zero parameters. The client
+checks the expected node ID and network before requesting channel information,
+refuses redirects and write methods, limits response size, and never retries.
+Returned reports omit node IDs, credentials and raw RPC errors.
+
+```sh
+python3 tests/test_read_only_rpc.py -v
+bash scripts/test-image-pair.sh \
+  btc-cln:swap-preparation xbt-cln:recovery-test ../bitcoind rpc
+```
+
+No image rebuild is required: the launcher mounts the new fixture and client.
+Both image nodes run on isolated loopback with fresh regtest wallets. The test
+checks trusted HTTPS, rejection of an untrusted certificate, identity/network
+mismatches, missing and invalid credentials, disallowed methods and parameters,
+and rune revocation. The existing `all` mode retains its four funded swap tests;
+run `rpc` separately.
+
+This is a transport compatibility test, not a deployed controller. It creates
+no live credentials, changes no StartOS interfaces, and enables no live gates.
+The probe rune is deliberately insufficient for swap execution. A later
+controller integration must define and test its separate operational authority.
