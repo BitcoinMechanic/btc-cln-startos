@@ -1,4 +1,4 @@
-import { copyFile } from 'fs/promises'
+import { copyFile, unlink } from 'fs/promises'
 import { rescanBlockchain } from './actions/rescanBlockchain'
 import { storeJson } from './fileModels/store.json'
 import { i18n } from './i18n'
@@ -9,6 +9,8 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
     sdk.Backups.ofVolumes('main')
       .setOptions({
         exclude: [
+          'coordinator-preparation.json',
+          'coordinator-preparation.lock',
           'bitcoin/lightning-rpc',
           'bitcoin/lightningd.sqlite3',
           'bitcoin/lightningd.sqlite3-wal',
@@ -18,6 +20,11 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
         ],
       })
       .setPostRestore(async (effects) => {
+        // Preparation is local opt-in, never restored as coordinator authority.
+        await unlink('/media/startos/volumes/main/coordinator-preparation.json')
+          .catch((error: NodeJS.ErrnoException) => {
+            if (error.code !== 'ENOENT') throw error
+          })
         // CLN's chanbackup plugin keeps emergency.recover describing the
         // CURRENT channel set, so once the restored node processes (and
         // forgets) the old channels, it rewrites the file without them.

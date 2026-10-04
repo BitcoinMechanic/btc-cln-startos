@@ -1,3 +1,4 @@
+import { coordinatorStatus, prepareCoordinator } from './coordinator'
 import { sdk } from '../sdk'
 import { experimental } from './config/experimental'
 import { config } from './config/config'
@@ -43,5 +44,7 @@ export const actions = sdk.Actions.of()
   .addAction(clbossIgnoreOnchain)
   .addAction(clbossNoticeOnchain)
   .addAction(clbossUnmanage)
+  .addAction(coordinatorStatus)
+  .addAction(prepareCoordinator)
 
 // @TODO generate-lnlink

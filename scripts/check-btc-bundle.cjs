@@ -1,0 +1,16 @@
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const { manifest, actions } = require('../javascript/index.js')
+assert.equal(manifest.id, 'c-lightning')
+assert.equal(manifest.version, '26.6.8:6')
+assert.equal(manifest.packageRepo, 'https://github.com/BitcoinMechanic/btc-cln-startos')
+assert.deepEqual(Object.keys(manifest.images), ['lightning', 'ui'])
+assert.equal(manifest.images.lightning.source.dockerBuild.dockerfile, 'Dockerfile')
+assert.equal(manifest.dependencies.bitcoind.optional, false)
+for (const id of ['coordinator-status', 'coordinator-prepare', 'node-info']) {
+  assert.ok(actions.actions[id], id)
+}
+const backup = fs.readFileSync('startos/backups.ts', 'utf8')
+assert.ok(backup.includes("'coordinator-preparation.json'"))
+assert.ok(backup.includes("unlink('/media/startos/volumes/main/coordinator-preparation.json')"))
+console.log('BTC package identity, images, preparation actions and restore invalidation checks OK')

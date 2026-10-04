@@ -180,3 +180,6 @@ COPY --from=swap-source /src/swap/tools/blake2b/ /usr/local/libexec/cln-swap/
 COPY --from=swap-source /src/swap/LICENSE /usr/local/share/cln-swap/LICENSE
 COPY assets/swaps/check_bundle.py /usr/local/libexec/check-btc-swap-bundle.py
 RUN python3 /usr/local/libexec/check-btc-swap-bundle.py
+
+COPY assets/swaps/coordinator.py /usr/local/libexec/btc-coordinator.py
+RUN python3 -m py_compile /usr/local/libexec/btc-coordinator.py

@@ -113,9 +113,9 @@ The BTC daemon remains upstream CLN v26.06.8; the existing UI and wrapper
 configuration are retained. Swap files are outside automatic plugin discovery.
 No swap gate, quote API, controller or additional listener is enabled.
 
-This first patch is an image build checkpoint only. It does not change the
-package version or authorize installation over an existing CLN wallet. Build
-and test the image before the package-version and controller-pairing work.
+The initial image checkpoint established binary compatibility. Package
+26.6.8:6 now adds preparation actions; live controller pairing is still absent.
+An installation over an existing CLN wallet is not part of this pilot.
 Existing package ID `c-lightning` is retained: this is not a side-by-side
 installation alongside another `c-lightning` package on the same StartOS box.
 
@@ -185,3 +185,49 @@ or Docker socket enters the container. The Knots binary supplies two isolated
 backends: ordinary BTC regtest and activated XBT regtest. Temporary extracted
 binaries are removed at exit, while test logs remain at the printed path.
 This does not activate a gate on either installed StartOS node.
+
+
+## BTC coordinator preparation package — 26.6.8:6
+
+This build retains upstream CLN v26.06.8, the web UI, existing interfaces and
+package ID `c-lightning`. Its title is **Core Lightning (Swap Preparation)**
+and its package repository is `BitcoinMechanic/btc-cln-startos`. Since the ID
+is shared with the stock package, it cannot be installed alongside stock
+Core Lightning on the same box. Start with a fresh installation on the BTC
+Bitcoin Core box; do not use this pilot to migrate an existing funded wallet.
+
+After ordinary package initialization and synchronization, run **Coordinator
+Readiness**, then **Prepare Coordinator** with confirmation, then readiness
+again. The expected result includes `prepared: true`,
+`controller_pairing_required: true`, and
+`live_activation_enabled_by_package: false`. No payment is started.
+
+Preparation checks the pinned modules, BTC network label, expected CLN
+version, node identity, absence of synchronization warnings or pending HTLCs,
+and pending wrapper restore/rescan flags. It saves a mode-0600 receipt tied
+to that node, network, CLN version and source revision. Repeating the action
+preserves its bytes; a changed identity or record is refused. The status
+action performs only read RPCs (its local lock file may be created).
+
+The receipt is advisory preparation, not gate activation, backend chain proof
+or spending authorization. Pairing must independently verify both backends
+and operator identities and establish policy. No swap plugin is auto-loaded;
+no controller, quote API or new network listener is started by these actions.
+The receipt and lock are excluded from backup, and a restore removes any
+existing receipt. Ordinary upstream wallet backup/recovery behavior otherwise
+remains unchanged. Active swap recovery is not enabled by this package.
+
+Build on the packaging VM:
+
+```sh
+python3 tests/test_coordinator.py -v
+npm ci --ignore-scripts
+npm run check
+npm run build
+node scripts/check-btc-bundle.cjs
+BUILDX_BUILDER=startos-builder make x86
+```
+
+The artifact is `c-lightning_x86_64.s9pk`. The XBT package is separate and
+unchanged. Before installation, confirm the target box does not already
+have a Core Lightning wallet that this same-ID package would replace.
