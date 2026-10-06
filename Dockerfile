@@ -187,6 +187,7 @@ RUN python3 -m py_compile /usr/local/libexec/btc-coordinator.py
 COPY assets/swaps/coordinator.py assets/swaps/read_only_rpc.py assets/swaps/controller_credential.py /usr/local/libexec/btc-controller/
 RUN python3 -m py_compile /usr/local/libexec/btc-controller/*.py
 
+COPY assets/swaps/gate_credential.py /usr/local/libexec/btc-controller/gate_credential.py
 COPY assets/swaps/gate.py /usr/local/libexec/btc-controller/gate.py
 COPY assets/swaps/gate_plugin /usr/local/libexec/btc-gate-plugin
 RUN chmod 755 /usr/local/libexec/btc-gate-plugin

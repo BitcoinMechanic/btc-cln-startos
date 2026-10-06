@@ -1,9 +1,9 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '26.6.8:8',
+  version: '26.6.8:9',
   releaseNotes: {
-    en_US: 'Add explicit bounded BTC gate opt-in and status with persistent journal and restore invalidation. Controller live execution remains disabled.',
+    en_US: 'Add a separate restricted BTC gate observation credential. Controller live execution remains disabled.',
   },
   migrations: { up: async () => {}, down: IMPOSSIBLE },
 })

@@ -1,3 +1,4 @@
+import { gateCredentialStatus, gateCredentialCreate, gateCredentialRevoke } from './gateCredential'
 import { btcGateStatus, activateBtcGate } from './gate'
 import { controllerCredentialStatus, controllerCredentialCreate, controllerCredentialRevoke } from './controllerCredential'
 import { coordinatorStatus, prepareCoordinator } from './coordinator'
@@ -46,6 +47,9 @@ export const actions = sdk.Actions.of()
   .addAction(clbossIgnoreOnchain)
   .addAction(clbossNoticeOnchain)
   .addAction(clbossUnmanage)
+  .addAction(gateCredentialStatus)
+  .addAction(gateCredentialCreate)
+  .addAction(gateCredentialRevoke)
   .addAction(btcGateStatus)
   .addAction(activateBtcGate)
   .addAction(coordinatorStatus)

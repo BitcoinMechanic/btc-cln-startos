@@ -2,12 +2,12 @@ const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const { manifest, actions } = require('../javascript/index.js')
 assert.equal(manifest.id, 'c-lightning')
-assert.equal(manifest.version, '26.6.8:8')
+assert.equal(manifest.version, '26.6.8:9')
 assert.equal(manifest.packageRepo, 'https://github.com/BitcoinMechanic/btc-cln-startos')
 assert.deepEqual(Object.keys(manifest.images), ['lightning', 'ui'])
 assert.equal(manifest.images.lightning.source.dockerBuild.dockerfile, 'Dockerfile')
 assert.equal(manifest.dependencies.bitcoind.optional, false)
-for (const id of ['btc-gate-status', 'btc-gate-activate', 'controller-credential-status', 'controller-credential-create', 'controller-credential-revoke', 'coordinator-status', 'coordinator-prepare', 'node-info']) {
+for (const id of ['gate-credential-status', 'gate-credential-create', 'gate-credential-revoke', 'btc-gate-status', 'btc-gate-activate', 'controller-credential-status', 'controller-credential-create', 'controller-credential-revoke', 'coordinator-status', 'coordinator-prepare', 'node-info']) {
   assert.ok(actions.actions[id], id)
 }
 const backup = fs.readFileSync('startos/backups.ts', 'utf8')
