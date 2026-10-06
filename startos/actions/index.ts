@@ -1,3 +1,4 @@
+import { inspectionCredentialStatus, inspectionCredentialCreate, inspectionCredentialRevoke } from './inspectionCredential'
 import { gateCredentialStatus, gateCredentialCreate, gateCredentialRevoke } from './gateCredential'
 import { btcGateStatus, activateBtcGate } from './gate'
 import { controllerCredentialStatus, controllerCredentialCreate, controllerCredentialRevoke } from './controllerCredential'
@@ -50,6 +51,9 @@ export const actions = sdk.Actions.of()
   .addAction(gateCredentialStatus)
   .addAction(gateCredentialCreate)
   .addAction(gateCredentialRevoke)
+  .addAction(inspectionCredentialStatus)
+  .addAction(inspectionCredentialCreate)
+  .addAction(inspectionCredentialRevoke)
   .addAction(btcGateStatus)
   .addAction(activateBtcGate)
   .addAction(coordinatorStatus)

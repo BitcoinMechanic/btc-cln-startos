@@ -191,3 +191,5 @@ COPY assets/swaps/gate_credential.py /usr/local/libexec/btc-controller/gate_cred
 COPY assets/swaps/gate.py /usr/local/libexec/btc-controller/gate.py
 COPY assets/swaps/gate_plugin /usr/local/libexec/btc-gate-plugin
 RUN chmod 755 /usr/local/libexec/btc-gate-plugin
+
+COPY assets/swaps/inspection_credential.py /usr/local/libexec/btc-controller/inspection_credential.py

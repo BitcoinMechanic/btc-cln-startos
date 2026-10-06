@@ -9,6 +9,8 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
     sdk.Backups.ofVolumes('main')
       .setOptions({
         exclude: [
+        'controller-inspection-read-only.json',
+        'controller-inspection-read-only.lock',
           'btc-gate-activation.json',
           'btc-gate.lock',
           'coordinator-preparation.json',
@@ -26,6 +28,10 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
         await unlink('/media/startos/volumes/main/btc-gate-activation.json').catch((error: NodeJS.ErrnoException) => {
           if (error.code !== 'ENOENT') throw error
         })
+
+      await unlink(sdk.volumes.main.subpath('controller-inspection-read-only.json')).catch((error: NodeJS.ErrnoException) => {
+        if (error.code !== 'ENOENT') throw error
+      })
         // Preparation is local opt-in, never restored as coordinator authority.
         await unlink('/media/startos/volumes/main/coordinator-preparation.json')
           .catch((error: NodeJS.ErrnoException) => {
