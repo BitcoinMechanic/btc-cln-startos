@@ -193,3 +193,6 @@ COPY assets/swaps/gate_plugin /usr/local/libexec/btc-gate-plugin
 RUN chmod 755 /usr/local/libexec/btc-gate-plugin
 
 COPY assets/swaps/inspection_credential.py /usr/local/libexec/btc-controller/inspection_credential.py
+
+COPY assets/swaps/bound_release.py /usr/local/libexec/btc-controller/bound_release.py
+RUN python3 -m py_compile /usr/local/libexec/btc-controller/bound_release.py

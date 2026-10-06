@@ -640,3 +640,23 @@ The private receipt `controller-inspection-read-only.json` and lock are
 excluded from backups; the receipt is removed on restore. This does not revoke
 an externally retained rune on a still-running original node. Inspection grants
 no execution authority, and existing gate restore barriers remain in effect.
+
+
+## Hash-bound forward recovery release
+
+The packaged gate adapter adds xbt-release-bound with named payment_hash and
+preimage parameters. Both must be canonical 32-byte hex values, and SHA256 of
+the preimage must equal the supplied hash. Invalid input returns a fixed error
+without entering release or changing the journal. Valid input enters the original
+pinned gate's release path in the same process: the existing held-HTLC lookup,
+durable resolution write and hook response ordering are retained. No source pin
+or existing journal format changes. The adapter verifies the pinned gate hash.
+
+The legacy xbt-release RPC remains available for compatibility. New dedicated
+post-close recovery runes must allow only xbt-release-bound for the intended
+payment_hash, not the legacy RPC. The adapter alone does not restrict old runes
+or enable controller live execution. Activation and restore barriers are unchanged.
+
+The local bound-release tests exercise the pinned gate's actual journal, invalid
+requests, valid resolution and restart replay. Rebuild the BTC Docker image for
+funded validation; no StartOS install or version bump is part of this checkpoint.

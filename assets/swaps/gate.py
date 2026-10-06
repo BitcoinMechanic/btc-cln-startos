@@ -145,10 +145,13 @@ def plugin():
                     require(params['configuration']['network'] == 'bitcoin', 'wrong_network')
                     require(params.get('options', {}).get('xbt-live-pilot') == PROFILE, 'gate_profile_changed')
             yield line
-    sys.stdin = requests()
+    from bound_release import requests as bound_requests
+    stream = bound_requests(namespace, requests())
+    sys.stdin = stream
     try: namespace['main']()
     finally:
         sys.stdin = original
+        stream.close()
         os.close(lock_fd)
 
 
