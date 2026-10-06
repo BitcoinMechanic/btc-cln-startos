@@ -138,6 +138,10 @@ export const main = sdk.setupMain(async ({ effects }) => {
       subcontainer: lightningSub,
       exec: {
         command: [
+          '/usr/bin/python3',
+          '/usr/local/libexec/btc-controller/gate.py',
+          'launch',
+          rootDir,
           'lightningd',
           `--lightning-dir=${rootDir}`,
           `--conf=${rootDir}/config`,

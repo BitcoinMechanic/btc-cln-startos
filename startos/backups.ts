@@ -1,4 +1,4 @@
-import { copyFile, unlink } from 'fs/promises'
+import { copyFile, unlink, writeFile } from 'fs/promises'
 import { rescanBlockchain } from './actions/rescanBlockchain'
 import { storeJson } from './fileModels/store.json'
 import { i18n } from './i18n'
@@ -9,6 +9,8 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
     sdk.Backups.ofVolumes('main')
       .setOptions({
         exclude: [
+          'btc-gate-activation.json',
+          'btc-gate.lock',
           'coordinator-preparation.json',
           'coordinator-preparation.lock',
           'bitcoin/lightning-rpc',
@@ -20,6 +22,10 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
         ],
       })
       .setPostRestore(async (effects) => {
+        await writeFile('/media/startos/volumes/main/btc-gate-restored.json', JSON.stringify({ schema: 1, blocked: true }), { mode: 0o600 })
+        await unlink('/media/startos/volumes/main/btc-gate-activation.json').catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== 'ENOENT') throw error
+        })
         // Preparation is local opt-in, never restored as coordinator authority.
         await unlink('/media/startos/volumes/main/coordinator-preparation.json')
           .catch((error: NodeJS.ErrnoException) => {

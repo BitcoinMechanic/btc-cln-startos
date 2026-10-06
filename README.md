@@ -561,3 +561,39 @@ regtest CLN: repeated creation, HTTPS authentication, filtered status, exact
 revocation and repeated revocation. It mounts the helper, so no image rebuild
 is needed for that test. Building the updated StartOS package does require a
 new image; the installed package remains unchanged until then.
+
+## Bounded BTC gate activation (26.6.8:8)
+
+`BTC Swap Gate Status` reports configured versus actually running state. The
+package is inert by default. `Enable Bounded BTC Swap Gate` requires explicit
+confirmation, successful Coordinator Preparation, the original wallet identity,
+a connected normal BTC channel and no pending HTLCs. Restart Core Lightning
+manually after enabling, then check status. Do not repeat a channel opening.
+
+This activates the existing pinned `live-pilot-v1` gate: one quote only,
+exactly 1,000 BTC sats for 2,000 XBT sats, with incoming CLTV bounds of
+288–2016 blocks. This is a development test ratio, not a market price or a
+complete cross-chain timing policy. No invoice is published, no credential is
+created, and no payment is submitted by these actions. The Swap Controller
+still refuses live execution. Existing read-only controller credentials are
+unchanged and cannot query this gate; use the local status action.
+
+Gate code stays in the image and is checked against its pinned SHA256.
+The journal is stored persistently at `bitcoin/swap-gate/quote_plugin.quotes.json`
+on the main volume. Its records and preimages must never be manually removed.
+Unrelated incoming payments pass through the live gate unchanged.
+Activation is bound to the prepared node ID and hash of the wallet secret;
+changed secrets, source bytes, symlinks and pre-existing unowned journals are
+refused. There is no disable/reset action that could abandon a held payment.
+
+Backups retain gate journals but exclude activation authority. Restore writes
+`btc-gate-restored.json` and removes activation before normal service startup;
+re-enabling a restored gate is blocked. This does not make a stale node backup
+safe for resuming live channels or swaps. Existing emergency channel recovery
+semantics remain unchanged.
+
+Validation: `tests/test_gate.py` exercises opt-in, identity and restore barriers,
+inert startup, runtime status and pinned plugin protocol persistence/replay.
+Set `BTC_GATE_TEST_SOURCE` to the pinned image's `quote_plugin.py` when running
+that test. The protocol test simulates hook messages; it is not a funded live
+swap or proof of cross-chain timing safety.
