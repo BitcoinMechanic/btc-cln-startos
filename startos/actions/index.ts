@@ -1,3 +1,4 @@
+import { authorizeForwardPilot } from './forwardPilot'
 import { inspectionCredentialStatus, inspectionCredentialCreate, inspectionCredentialRevoke } from './inspectionCredential'
 import { gateCredentialStatus, gateCredentialCreate, gateCredentialRevoke } from './gateCredential'
 import { btcGateStatus, activateBtcGate } from './gate'
@@ -27,7 +28,7 @@ import {
   clbossUnmanage,
 } from './clboss'
 
-export const actions = sdk.Actions.of()
+export const actions = sdk.Actions.of().addAction(authorizeForwardPilot)
   .addAction(config)
   .addAction(displaySeed)
   .addAction(experimental)

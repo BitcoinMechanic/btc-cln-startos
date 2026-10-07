@@ -121,6 +121,8 @@ def launch(root, args):
         path.parent.mkdir(mode=0o700, exist_ok=True)
         os.environ['BTC_GATE_ROOT'] = str(root)
         args += ['--plugin='+PLUGIN, '--xbt-live-pilot='+PROFILE]
+    os.environ['BTC_GATE_ROOT'] = str(root)
+    args += ['--plugin=/usr/local/libexec/btc-pilot-plugin']
     os.execvp(args[0], args)
 
 

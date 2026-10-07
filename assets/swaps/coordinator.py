@@ -70,18 +70,21 @@ class Preparation:
             require(settings.get('rescan') is None, 'rescan_pending')
         info = self.rpc('getinfo')
         require(info.get('network') == 'bitcoin', 'wrong_network')
-        require(info.get('version') in ('v26.06.8', '26.06.8'), 'unexpected_cln_version')
+        require(info.get('version') in ('v26.06.9', '26.06.9'), 'unexpected_cln_version')
         require(re.fullmatch(r'0[23][0-9a-f]{64}', info.get('id', '')), 'invalid_node_identity')
         require(not any(k.startswith('warning_') for k in info), 'node_sync_warning')
         channels = self.rpc('listpeerchannels')['channels']
         require(not any(c.get('htlcs') for c in channels), 'pending_htlcs')
         expected = dict(schema=1, scope='preparation-only', network='bitcoin',
-                        node_id=info['id'], source_commit=PIN, cln_version='26.06.8')
+                        node_id=info['id'], source_commit=PIN, cln_version='26.06.9')
         path = self.root / RECORD
         prepared = os.path.lexists(path)
         if prepared:
-            require(load(path) == expected, 'preparation_binding_changed')
-        return expected, dict(prepared=prepared, network='bitcoin', cln_version='26.06.8',
+            recorded = load(path)
+            if recorded.get('cln_version') == '26.06.8':
+                recorded = dict(recorded, cln_version='26.06.9')
+            require(recorded == expected, 'preparation_binding_changed')
+        return expected, dict(prepared=prepared, network='bitcoin', cln_version='26.06.9',
                              source_commit=PIN, controller_pairing_required=True,
                              live_activation_enabled_by_package=False, payment_started=False)
 

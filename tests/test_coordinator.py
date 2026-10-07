@@ -15,7 +15,7 @@ class PreparationTests(unittest.TestCase):
         self.bundle = self.root/'bundle'; self.bundle.mkdir()
         (self.bundle/'SOURCE_COMMIT').write_text(m.PIN)
         for n in ('quote_plugin.py','reverse_activation.py','receive_activation.py'): (self.bundle/n).touch()
-        self.info = dict(id='02'+'a'*64, network='bitcoin', version='v26.06.8')
+        self.info = dict(id='02'+'a'*64, network='bitcoin', version='v26.06.9')
         self.channels = []; self.calls = []
         self.worker = m.Preparation(self.root, rpc=self.rpc, bundle=self.bundle)
 

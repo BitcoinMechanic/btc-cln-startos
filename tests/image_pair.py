@@ -24,7 +24,7 @@ class PairLab(Lab):
         if network not in ('regtest', 'xbt-regtest') or not expect_success:
             raise ValueError('Pair fixture accepts successful regtest nodes only')
         prefix = '/opt/xbt' if network == 'xbt-regtest' else '/usr/local'
-        expected = ('xbt-81ba4099a63e',) if network == 'xbt-regtest' else ('v26.06.8', '26.06.8')
+        expected = ('xbt-81ba4099a63e-cln26.06.9',) if network == 'xbt-regtest' else ('v26.06.9', '26.06.9')
         data = self.root / name
         data.mkdir(exist_ok=True, mode=0o700)
         port = self.port()

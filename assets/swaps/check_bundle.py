@@ -34,7 +34,7 @@ def check(bundle, check_binary=True):
     if check_binary:
         version = subprocess.run(['lightningd', '--version'], capture_output=True,
                                  text=True, timeout=15, check=True).stdout.strip()
-        if version not in ('v26.06.8', '26.06.8'):
+        if version not in ('v26.06.9', '26.06.9'):
             raise ValueError('Unexpected BTC CLN version: ' + version)
         subprocess.run(['bitcoin-cli', '--version'], capture_output=True,
                        text=True, timeout=15, check=True)

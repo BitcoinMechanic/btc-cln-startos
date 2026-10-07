@@ -9,6 +9,7 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
     sdk.Backups.ofVolumes('main')
       .setOptions({
         exclude: [
+        'forward-pilot.json', 'forward-pilot.lock',
         'controller-inspection-read-only.json',
         'controller-inspection-read-only.lock',
           'btc-gate-activation.json',
@@ -24,6 +25,7 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
         ],
       })
       .setPostRestore(async (effects) => {
+      await writeFile(sdk.volumes.main.subpath('forward-pilot-restored.json'), JSON.stringify({blocked:true}), {mode:0o600})
         await writeFile('/media/startos/volumes/main/btc-gate-restored.json', JSON.stringify({ schema: 1, blocked: true }), { mode: 0o600 })
         await unlink('/media/startos/volumes/main/btc-gate-activation.json').catch((error: NodeJS.ErrnoException) => {
           if (error.code !== 'ENOENT') throw error

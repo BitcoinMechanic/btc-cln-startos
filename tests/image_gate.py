@@ -38,7 +38,7 @@ class ImageLab(Lab):
                '--json', '--notifications=none']
         info = wait_until(lambda: self.rpc(cli, 'getinfo'), proc, timeout=120)
         check(info['network'] == 'regtest', 'Wrong network')
-        check(info['version'] in ('v26.06.8', '26.06.8'), 'Wrong BTC binary')
+        check(info['version'] in ('v26.06.9', '26.06.9'), 'Wrong BTC binary')
         def listening():
             try:
                 with socket.create_connection(('127.0.0.1', port), timeout=1): return True

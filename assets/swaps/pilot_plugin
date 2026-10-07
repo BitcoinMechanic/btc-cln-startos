@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/python3 /usr/local/libexec/btc-controller/pilot_node.py btc "$BTC_GATE_ROOT" plugin
