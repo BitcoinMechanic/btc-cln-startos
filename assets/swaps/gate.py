@@ -14,7 +14,7 @@ from coordinator import Blocked, PIN, Preparation, load, require, save
 PROFILE = 'live-pilot-v1'
 PLUGIN = '/usr/local/libexec/btc-gate-plugin'
 SOURCE = Path('/usr/local/libexec/cln-swap/quote_plugin.py')
-SOURCE_HASH = '19a91416b5f6edc2a8c651463185f7676483c1b59367ea54e9e449c546853b5d'
+SOURCE_HASH = '5073f0d7a6d5357b49a03eaa4d4a43a9668e87d6199bb979d5b5b9f3d651705e'
 RECORD = 'btc-gate-activation.json'
 BARRIER = 'btc-gate-restored.json'
 
@@ -39,8 +39,8 @@ def record(root):
     require(not os.path.lexists(root / BARRIER), 'restored_gate_blocked')
     data = load(root / RECORD)
     require(set(data) == {'schema', 'profile', 'source_commit', 'source_sha256', 'node_id', 'secret_sha256'}, 'activation_invalid')
-    require(data['schema'] == 1 and data['profile'] == PROFILE and data['source_commit'] == PIN
-            and data['source_sha256'] == SOURCE_HASH and data['secret_sha256'] == key_hash(root), 'activation_binding_changed')
+    require(data['schema'] == 1 and data['profile'] in (PROFILE, 'startos-fixed-repeat-v1') and data['source_commit'] == PIN
+            and data['source_sha256'] in (SOURCE_HASH, '19a91416b5f6edc2a8c651463185f7676483c1b59367ea54e9e449c546853b5d') and data['secret_sha256'] == key_hash(root), 'activation_binding_changed')
     return data
 
 
@@ -83,12 +83,12 @@ class Gate:
         if active:
             require(configured and not blocked, 'unbound_active_gate')
             result = self.rpc('xbt-pilot-info')
-            require(result.get('profile') == PROFILE, 'gate_profile_changed')
+            require(result.get('profile') == binding['profile'], 'gate_profile_changed')
             count = result.get('registered_quotes')
             require(type(count) is int and count >= 0, 'invalid_gate_status')
         return dict(configured=configured, active=active, restart_required=configured and not active,
-                    restored_gate_blocked=blocked, profile=PROFILE, registered_quotes=count,
-                    btc_sats=1000, xbt_sats=2000, single_quote_only=True,
+                    restored_gate_blocked=blocked, profile=binding['profile'] if configured else PROFILE, registered_quotes=count,
+                    btc_sats=1000, xbt_sats=2000, single_quote_only=not configured or binding['profile'] == PROFILE,
                     controller_live_execution_enabled=False, payment_started=False)
 
     def activate(self, confirmed):
@@ -103,7 +103,8 @@ class Gate:
         target = dict(schema=1, profile=PROFILE, source_commit=PIN, source_sha256=SOURCE_HASH,
                       node_id=expected['node_id'], secret_sha256=key_hash(self.root))
         if os.path.lexists(self.root / RECORD):
-            require(record(self.root) == target, 'activation_binding_changed')
+            existing = record(self.root)
+            require(all(existing[k] == target[k] for k in ('schema', 'source_commit', 'node_id', 'secret_sha256')), 'activation_binding_changed')
         else:
             journal = journal_path(self.root)
             require(not os.path.lexists(journal), 'existing_gate_journal_requires_recovery')
@@ -116,11 +117,11 @@ def launch(root, args):
     require(not any('xbt-live-pilot' in a or 'btc-gate-plugin' in a for a in args), 'duplicate_gate_option')
     if os.path.lexists(root / RECORD):
         source_check()
-        record(root)
+        activation = record(root)
         path = journal_path(root)
         path.parent.mkdir(mode=0o700, exist_ok=True)
         os.environ['BTC_GATE_ROOT'] = str(root)
-        args += ['--plugin='+PLUGIN, '--xbt-live-pilot='+PROFILE]
+        args += ['--plugin='+PLUGIN, '--xbt-live-pilot='+activation['profile']]
     os.environ['BTC_GATE_ROOT'] = str(root)
     args += ['--plugin=/usr/local/libexec/btc-pilot-plugin']
     os.execvp(args[0], args)
@@ -145,7 +146,7 @@ def plugin():
                 if message.get('method') == 'init':
                     params = message['params']
                     require(params['configuration']['network'] == 'bitcoin', 'wrong_network')
-                    require(params.get('options', {}).get('xbt-live-pilot') == PROFILE, 'gate_profile_changed')
+                    require(params.get('options', {}).get('xbt-live-pilot') == record(root)['profile'], 'gate_profile_changed')
             yield line
     from bound_release import requests as bound_requests
     stream = bound_requests(namespace, requests())

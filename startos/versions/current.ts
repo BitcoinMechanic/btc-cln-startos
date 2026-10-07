@@ -1,9 +1,7 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '26.6.9:0',
-  releaseNotes: {
-    en_US: 'Include Core Lightning 26.06.9 security fixes and correct CLBOSS Auto Close configuration. Retain explicit forward pilot authority and existing node identities.',
-  },
+  version: '26.6.9:1',
+  releaseNotes: { en_US: 'Bounded repeat forward swaps with 24-hour channel-pinned grants, per-swap confirmation and durable history. Fixed 1,000 BTC sat to 2,000 XBT sat amounts; existing pilot records retained.' },
   migrations: { up: async () => {}, down: IMPOSSIBLE },
 })

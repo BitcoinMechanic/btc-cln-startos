@@ -1,3 +1,4 @@
+import { enableSwapSession, pauseSwapSession } from './swapSession'
 import { authorizeForwardPilot } from './forwardPilot'
 import { inspectionCredentialStatus, inspectionCredentialCreate, inspectionCredentialRevoke } from './inspectionCredential'
 import { gateCredentialStatus, gateCredentialCreate, gateCredentialRevoke } from './gateCredential'
@@ -28,7 +29,7 @@ import {
   clbossUnmanage,
 } from './clboss'
 
-export const actions = sdk.Actions.of().addAction(authorizeForwardPilot)
+export const actions = sdk.Actions.of().addAction(authorizeForwardPilot).addAction(enableSwapSession).addAction(pauseSwapSession)
   .addAction(config)
   .addAction(displaySeed)
   .addAction(experimental)

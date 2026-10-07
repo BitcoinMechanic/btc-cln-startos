@@ -161,6 +161,10 @@ RUN git init && \
 # build an HTTPS client, so no tower ever registers (see README.md).
 #
 # `libpq5` and `libsodium23` are lightningd's own runtime deps.
+
+COPY assets/swaps/repeat_gate.patch /tmp/repeat_gate.patch
+RUN cd /src/swap/tools/blake2b && git apply --check /tmp/repeat_gate.patch && git apply /tmp/repeat_gate.patch && echo "5073f0d7a6d5357b49a03eaa4d4a43a9668e87d6199bb979d5b5b9f3d651705e  quote_plugin.py" | sha256sum -c - && rm /tmp/repeat_gate.patch
+
 FROM debian:bookworm-slim AS final
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -200,3 +204,5 @@ RUN python3 -m py_compile /usr/local/libexec/btc-controller/bound_release.py
 COPY assets/swaps/pilot_node.py assets/swaps/pilot_contract.py /usr/local/libexec/btc-controller/
 COPY assets/swaps/pilot_plugin /usr/local/libexec/btc-pilot-plugin
 RUN chmod 755 /usr/local/libexec/btc-pilot-plugin && /usr/bin/python3 -m py_compile /usr/local/libexec/btc-controller/pilot_node.py /usr/local/libexec/btc-controller/pilot_contract.py
+
+COPY assets/swaps/swap_session.py /usr/local/libexec/btc-controller/

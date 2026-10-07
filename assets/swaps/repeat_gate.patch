@@ -1,0 +1,63 @@
+--- a/quote_plugin.py
++++ b/quote_plugin.py
+@@ -123,6 +123,7 @@
+         if method == 'getmanifest':
+             reply(request, {'options': [{'name': 'xbt-live-pilot', 'type': 'string',
+                 'default': 'disabled', 'description': 'Explicit bounded live pilot opt-in'}], 'rpcmethods': [
++                {'name': 'xbt-retire-repeat', 'usage': 'payment_hash', 'description': 'Permanently retire an expired never-accepted repeat quote'},
+                 {'name': 'xbt-register', 'usage': 'quote', 'description': 'Register immutable test swap terms'},
+                 {'name': 'xbt-renew', 'usage': 'quote expiry', 'description': 'Renew an unused expired v2 quote once'},
+                 {'name': 'xbt-pilot-info', 'usage': '', 'description': 'Read active profile and saved quote count'},
+@@ -137,7 +138,7 @@
+         if method == 'init':
+             network = params['configuration']['network']
+             live_profile = params.get('options', {}).get('xbt-live-pilot')
+-            live = network == 'bitcoin' and live_profile in ('live-pilot-v1', 'live-pilot-v2', 'live-market-v1', 'live-market-v2', ROUTED_PROFILE)
++            live = network == 'bitcoin' and live_profile in ('startos-fixed-repeat-v1', 'live-pilot-v1', 'live-pilot-v2', 'live-market-v1', 'live-market-v2', ROUTED_PROFILE)
+             active = network == 'regtest' or live
+             reply(request, {} if active else {'disable': 'requires regtest or explicit live pilot'})
+             continue
+@@ -169,7 +170,7 @@
+                 if routed:
+                     routed_terms(quote)
+                 if live:
+-                    limits = {'live-pilot-v1': (1000000, 2000000),
++                    limits = {'startos-fixed-repeat-v1': (1000000, 2000000), 'live-pilot-v1': (1000000, 2000000),
+                               'live-pilot-v2': (2000000, 4000000)}
+                     if quote['pilot'] in ('live-market-v1', 'live-market-v2', ROUTED_PROFILE):
+                         for key, cap in (('btc_amount_msat', 10000000), ('xbt_amount_msat', 500000000)):
+@@ -208,6 +209,12 @@
+                                         and 'binding' not in previous and 'accepted' not in previous):
+                                     continue
+                                 raise ValueError('another quote is active; finish it first')
++                        elif quote['pilot'] == 'startos-fixed-repeat-v1':
++                            if not int(time.time()) < quote['expires_at'] <= int(time.time()) + 120:
++                                raise ValueError('repeat quote expiry exceeds two minutes')
++                            for previous in quotes.values():
++                                if previous['phase'] not in ('resolved', 'failed', 'expired'):
++                                    raise ValueError('previous quote must be terminal; retain original state')
+                         elif quotes:
+                             raise ValueError('live pilot permits one quote only; retain original state')
+                 for key in ('payment_hash', 'payment_secret'):
+@@ -230,6 +237,21 @@
+                 quotes[quote['payment_hash']] = {'terms': quote, 'phase': 'quoted'}
+                 save(path, quotes)
+                 reply(request, {'registered': True})
++            elif method == 'xbt-retire-repeat':
++                if type(params) is not dict or set(params) != {'payment_hash'}:
++                    raise ValueError('named payment hash required')
++                entry = quotes.get(params['payment_hash'])
++                if (not live or live_profile != 'startos-fixed-repeat-v1' or entry is None
++                        or entry['terms'].get('pilot') != 'startos-fixed-repeat-v1'
++                        or entry['phase'] not in ('quoted', 'expired')
++                        or any(k in entry for k in ('binding', 'accepted', 'preimage'))
++                        or params['payment_hash'] in pending
++                        or entry['terms']['expires_at'] > int(time.time())):
++                    raise ValueError('only expired never-accepted repeat quotes can retire')
++                if entry['phase'] != 'expired':
++                    entry['phase'] = 'expired'
++                    save(path, quotes)
++                reply(request, {'retired': True})
+             elif method == 'xbt-renew':
+                 old = params[0] if isinstance(params, list) else params['quote']
+                 expiry = params[1] if isinstance(params, list) else params['expiry']
