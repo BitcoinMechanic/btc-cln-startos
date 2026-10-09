@@ -2,9 +2,9 @@ import { T } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 import { mainMounts, rootDir } from '../utils'
 const metadata = (name: string) => async () => ({
-  name, description: 'BTC incoming swap gate. Controller live execution remains disabled.',
+  name, description: 'BTC incoming swap gate. Grants and per-swap confirmation authorize execution separately.',
   warning: null, allowedStatuses: 'only-running' as const,
-  group: 'Swap Gate', visibility: 'enabled' as const,
+  group: 'Swap Setup', visibility: 'enabled' as const,
 })
 async function invoke(effects: T.Effects, operation: string, confirmed = false): Promise<T.ActionResult & { version: '1' }> {
   return sdk.SubContainer.withTemp(effects, { imageId: 'lightning' }, mainMounts,
@@ -13,7 +13,7 @@ async function invoke(effects: T.Effects, operation: string, confirmed = false):
       const result = JSON.parse(String(response.stdout))
       if (response.exitCode !== 0) throw new Error(result.error + ' Reason: ' + result.reason)
       return { version: '1', title: 'BTC Swap Gate',
-        message: 'If restart required is true, restart Core Lightning and run BTC Swap Gate Status. This does not enable controller execution or publish an invoice.',
+        message: 'If restart required is true, restart Core Lightning and run BTC Swap Gate Status. Gate activation does not grant payment authority or publish an invoice.',
         result: { type: 'group', value: Object.entries(result).map(([key, value]) => ({
           name: key.replaceAll('_', ' '), description: null, type: 'single' as const,
           value: String(value), masked: false, copyable: false, qr: false,
