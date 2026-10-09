@@ -206,3 +206,5 @@ COPY assets/swaps/pilot_plugin /usr/local/libexec/btc-pilot-plugin
 RUN chmod 755 /usr/local/libexec/btc-pilot-plugin && /usr/bin/python3 -m py_compile /usr/local/libexec/btc-controller/pilot_node.py /usr/local/libexec/btc-controller/pilot_contract.py
 
 COPY assets/swaps/swap_session.py /usr/local/libexec/btc-controller/
+
+COPY assets/swaps/routed_plan.py assets/swaps/route_math.py assets/swaps/routed_invoice.py /usr/local/libexec/btc-controller/
