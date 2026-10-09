@@ -208,3 +208,6 @@ RUN chmod 755 /usr/local/libexec/btc-pilot-plugin && /usr/bin/python3 -m py_comp
 COPY assets/swaps/swap_session.py /usr/local/libexec/btc-controller/
 
 COPY assets/swaps/routed_plan.py assets/swaps/route_math.py assets/swaps/routed_invoice.py /usr/local/libexec/btc-controller/
+
+COPY assets/swaps/reverse_contract.py assets/swaps/reverse_node.py assets/swaps/reverse_session.py assets/swaps/reverse_plan.py assets/swaps/reverse_invoice.py /usr/local/libexec/btc-controller/
+RUN python3 -m py_compile /usr/local/libexec/btc-controller/reverse_contract.py /usr/local/libexec/btc-controller/reverse_node.py /usr/local/libexec/btc-controller/reverse_session.py /usr/local/libexec/btc-controller/reverse_plan.py /usr/local/libexec/btc-controller/reverse_invoice.py

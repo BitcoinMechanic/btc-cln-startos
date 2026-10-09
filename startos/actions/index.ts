@@ -1,3 +1,4 @@
+import { enableReverseSession, pauseReverseSession } from './reverseSession'
 import { enableSwapSession, pauseSwapSession } from './swapSession'
 import { authorizeForwardPilot } from './forwardPilot'
 import { inspectionCredentialStatus, inspectionCredentialCreate, inspectionCredentialRevoke } from './inspectionCredential'
@@ -29,7 +30,7 @@ import {
   clbossUnmanage,
 } from './clboss'
 
-export const actions = sdk.Actions.of().addAction(authorizeForwardPilot).addAction(enableSwapSession).addAction(pauseSwapSession)
+export const actions = sdk.Actions.of().addAction(enableReverseSession).addAction(pauseReverseSession).addAction(authorizeForwardPilot).addAction(enableSwapSession).addAction(pauseSwapSession)
   .addAction(config)
   .addAction(displaySeed)
   .addAction(experimental)
