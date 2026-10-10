@@ -6,7 +6,7 @@ import re
 import runpy
 import sys
 
-SOURCE_HASH = '5073f0d7a6d5357b49a03eaa4d4a43a9668e87d6199bb979d5b5b9f3d651705e'
+SOURCE_HASH = '2dcd0e828b8e34acec3ba906c673c8882a3ae526f3ddd9e857b10d473a4f381c'
 METHOD = 'xbt-release-bound'
 
 

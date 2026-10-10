@@ -14,7 +14,7 @@ from coordinator import Blocked, PIN, Preparation, load, require, save
 PROFILE = 'live-pilot-v1'
 PLUGIN = '/usr/local/libexec/btc-gate-plugin'
 SOURCE = Path('/usr/local/libexec/cln-swap/quote_plugin.py')
-SOURCE_HASH = '5073f0d7a6d5357b49a03eaa4d4a43a9668e87d6199bb979d5b5b9f3d651705e'
+SOURCE_HASH = '2dcd0e828b8e34acec3ba906c673c8882a3ae526f3ddd9e857b10d473a4f381c'
 RECORD = 'btc-gate-activation.json'
 BARRIER = 'btc-gate-restored.json'
 
@@ -39,8 +39,8 @@ def record(root):
     require(not os.path.lexists(root / BARRIER), 'restored_gate_blocked')
     data = load(root / RECORD)
     require(set(data) == {'schema', 'profile', 'source_commit', 'source_sha256', 'node_id', 'secret_sha256'}, 'activation_invalid')
-    require(data['schema'] == 1 and data['profile'] in (PROFILE, 'startos-fixed-repeat-v1') and data['source_commit'] == PIN
-            and data['source_sha256'] in (SOURCE_HASH, '19a91416b5f6edc2a8c651463185f7676483c1b59367ea54e9e449c546853b5d') and data['secret_sha256'] == key_hash(root), 'activation_binding_changed')
+    require(data['schema'] == 1 and data['profile'] in (PROFILE, 'startos-fixed-repeat-v1', 'startos-market-repeat-v1') and data['source_commit'] == PIN
+            and data['source_sha256'] in (SOURCE_HASH, '5073f0d7a6d5357b49a03eaa4d4a43a9668e87d6199bb979d5b5b9f3d651705e', '19a91416b5f6edc2a8c651463185f7676483c1b59367ea54e9e449c546853b5d') and data['secret_sha256'] == key_hash(root), 'activation_binding_changed')
     return data
 
 
