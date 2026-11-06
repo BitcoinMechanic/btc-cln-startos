@@ -1,7 +1,6 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
-
 export const current = VersionInfo.of({
-  version: '26.6.9:9',
-  releaseNotes: { en_US: 'Add Neoxa market-priced swaps in both directions with configurable 0% default markup, exact saved quotes and explicitly enabled amount/budget grants. Preserve fixed-price grants and existing recovery records.' },
-  migrations: { up: async () => {}, down: IMPOSSIBLE },
+  version: '#privkeyio:26.6.9:0',
+  releaseNotes: { en_US: 'Dedicated BTC coordinator test candidate: native CLN and bounded swap authority with explicit setup. Fresh installation only; no legacy package migration.' },
+  migrations: { up: IMPOSSIBLE, down: IMPOSSIBLE },
 })

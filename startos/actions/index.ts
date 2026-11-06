@@ -1,68 +1,30 @@
-import { enableReverseSession, pauseReverseSession } from './reverseSession'
-import { enableSwapSession, pauseSwapSession } from './swapSession'
-import { authorizeForwardPilot } from './forwardPilot'
-import { inspectionCredentialStatus, inspectionCredentialCreate, inspectionCredentialRevoke } from './inspectionCredential'
-import { gateCredentialStatus, gateCredentialCreate, gateCredentialRevoke } from './gateCredential'
-import { btcGateStatus, activateBtcGate } from './gate'
-import { controllerCredentialStatus, controllerCredentialCreate, controllerCredentialRevoke } from './controllerCredential'
-import { coordinatorStatus, prepareCoordinator } from './coordinator'
+import { createActions } from '../live/actions'
 import { sdk } from '../sdk'
-import { experimental } from './config/experimental'
 import { config } from './config/config'
-import { plugins } from './config/plugins'
-import { watchtower } from './watchtower/watchtower'
+import { displaySeed } from './displaySeed'
+import { experimental } from './config/experimental'
 import { createRune } from './generateRune'
 import { revokeRunes } from './revokeRunes'
 import { deleteGossipStore } from './deleteGossipStore'
 import { resetPassword } from './resetPassword'
-import { watchtowerInfo } from './watchtower/watchtowerInfo'
-import { watchtowerClientInfo } from './watchtower/watchtowerClientInfo'
 import { rescanBlockchain } from './rescanBlockchain'
 import { nodeInfo } from './nodeInfo'
-import { displaySeed } from './displaySeed'
 import { clearnetVpn } from './clearnetVpn'
 import { payInvoice } from './payInvoice'
 import { receivePayment } from './receivePayment'
-import {
-  clbossIgnoreOnchain,
-  clbossNoticeOnchain,
-  clbossStatus,
-  clbossUnmanage,
-} from './clboss'
 
-export const actions = sdk.Actions.of().addAction(enableReverseSession).addAction(pauseReverseSession).addAction(authorizeForwardPilot).addAction(enableSwapSession).addAction(pauseSwapSession)
+const nodeActions = sdk.Actions.of()
   .addAction(config)
   .addAction(displaySeed)
   .addAction(experimental)
-  .addAction(plugins)
-  .addAction(watchtower)
   .addAction(createRune)
   .addAction(revokeRunes)
   .addAction(deleteGossipStore)
   .addAction(resetPassword)
-  .addAction(watchtowerInfo)
-  .addAction(watchtowerClientInfo)
   .addAction(rescanBlockchain)
   .addAction(nodeInfo)
   .addAction(clearnetVpn)
   .addAction(payInvoice)
   .addAction(receivePayment)
-  .addAction(clbossStatus)
-  .addAction(clbossIgnoreOnchain)
-  .addAction(clbossNoticeOnchain)
-  .addAction(clbossUnmanage)
-  .addAction(gateCredentialStatus)
-  .addAction(gateCredentialCreate)
-  .addAction(gateCredentialRevoke)
-  .addAction(inspectionCredentialStatus)
-  .addAction(inspectionCredentialCreate)
-  .addAction(inspectionCredentialRevoke)
-  .addAction(btcGateStatus)
-  .addAction(activateBtcGate)
-  .addAction(coordinatorStatus)
-  .addAction(prepareCoordinator)
-  .addAction(controllerCredentialStatus)
-  .addAction(controllerCredentialCreate)
-  .addAction(controllerCredentialRevoke)
 
-// @TODO generate-lnlink
+export const actions = createActions(undefined, nodeActions)

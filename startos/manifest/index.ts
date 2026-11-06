@@ -3,7 +3,7 @@ import { depBitcoindDescription, long, short } from './i18n'
 
 export const manifest = setupManifest({
   id: 'c-lightning',
-  title: 'Core Lightning (Swap Preparation)',
+  title: 'BTC Core Lightning (Coordinator Candidate)',
   license: 'mit',
   packageRepo: 'https://github.com/BitcoinMechanic/btc-cln-startos',
   upstreamRepo: 'https://github.com/ElementsProject/lightning',
@@ -16,7 +16,7 @@ export const manifest = setupManifest({
     lightning: {
       source: {
         dockerBuild: {
-          dockerfile: 'Dockerfile',
+          dockerfile: 'Dockerfile.live',
           workdir: '.',
         },
       },

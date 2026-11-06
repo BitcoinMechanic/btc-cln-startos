@@ -1,0 +1,12 @@
+# 0102: requires exact accepted image IDs and sealed runtime staged by the bundle.
+ARG CLI_IMAGE
+ARG PARENT_IMAGE
+FROM ${CLI_IMAGE} AS cli
+FROM ${PARENT_IMAGE}
+USER root
+RUN rm -rf /usr/local/libexec/swap-node
+COPY runtime/ /usr/local/libexec/swap-node/
+COPY --from=cli /usr/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
+ENV PATH="/opt/btc/bin:${PATH}"
+RUN ln -sf /opt/btc/bin/lightning-cli /usr/local/bin/lightning-cli && ln -sf /opt/btc/bin/lightningd /usr/local/bin/lightningd
+RUN apt-get update && apt-get install -y --no-install-recommends wireguard-tools iptables iproute2 procps && rm -rf /var/lib/apt/lists/*

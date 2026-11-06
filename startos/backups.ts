@@ -17,7 +17,7 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
           'btc-gate.lock',
           'coordinator-preparation.json',
           'coordinator-preparation.lock',
-          'bitcoin/lightning-rpc',
+          'bitcoin/swap-coordinator-v1', 'bitcoin/.swap-setup-*', 'bitcoin/lightning-rpc',
           'bitcoin/lightningd.sqlite3',
           'bitcoin/lightningd.sqlite3-wal',
           'bitcoin/lightningd.sqlite3-shm',
@@ -26,6 +26,7 @@ export const { createBackup, restoreInit } = sdk.setupBackups(
         ],
       })
       .setPostRestore(async (effects) => {
+        await writeFile(sdk.volumes.main.subpath('node-restored.json'), JSON.stringify({schema:1,recovery:true}), {mode:0o600})
       await writeFile(sdk.volumes.main.subpath('forward-pilot-restored.json'), JSON.stringify({blocked:true}), {mode:0o600})
         await writeFile('/media/startos/volumes/main/btc-gate-restored.json', JSON.stringify({ schema: 1, blocked: true }), { mode: 0o600 })
         await unlink('/media/startos/volumes/main/btc-gate-activation.json').catch((error: NodeJS.ErrnoException) => {

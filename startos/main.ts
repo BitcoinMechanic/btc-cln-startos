@@ -1,3 +1,4 @@
+import { verifyBackend } from './migration/backend'
 import { FileHelper } from '@start9labs/start-sdk'
 import { manifest as bitcoinManifest } from 'bitcoin-core-startos/startos/manifest'
 import { createHash } from 'node:crypto'
@@ -48,11 +49,15 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // bitcoind's RPC over the bridge, for the sync-progress bitcoin-cli below.
   const bitcoind = await bitcoindRpcBridge(effects)
 
+  if (!bitcoind) throw new Error('BTC backend RPC is unavailable')
+
   // get store.json but don't watch for changes
   const store = await storeJson.read().once()
   if (!store) {
     throw new Error('no store.json')
   }
+
+  if (store.watchtowerServer || store.watchtowerClients.length || conf?.raw?.plugin?.length) throw new Error('External plugins are not enabled in this dedicated coordinator candidate')
 
   const watchtowerClientLoaded = !!conf?.raw?.plugin?.includes(
     watchtowerClientPlugin,
@@ -126,24 +131,34 @@ export const main = sdk.setupMain(async ({ effects }) => {
     .digest('hex')
 
   const baseDaemons = sdk.Daemons.of(effects)
+    .addOneshot('btc-backend-identity', {
+      subcontainer: lightningSub, requires: [], exec: { fn: async () => {
+        const rpc = async (method: string, ...args: string[]) => {
+          const r = await lightningSub.exec(['bitcoin-cli', `-rpcconnect=${bitcoind.host}`, `-rpcport=${bitcoind.port}`,
+            '-rpccookiefile=/mnt/bitcoin/.cookie', method, ...args])
+          if (r.exitCode !== 0) throw new Error('BTC backend inspection unavailable')
+          return String(r.stdout).trim()
+        }
+        const c = JSON.parse(await rpc('getblockchaininfo'))
+        const h = await rpc('getblockhash', '961640')
+        verifyBackend(c, h, await rpc('getblockheader', h, 'false'))
+        return null
+      } },
+    })
     .addOneshot('vpn', {
       subcontainer: lightningSub,
       exec: {
         command: ['sh', '-c', vpn ? vpnUpScript : vpnDownScript],
         env: { STARTOS_VPN_CONFIG_HASH: vpnConfigHash },
       },
-      requires: [],
+      requires: ['btc-backend-identity'],
     })
     .addDaemon('lightningd', {
       subcontainer: lightningSub,
       exec: {
         command: [
-          '/usr/bin/python3',
-          '/usr/local/libexec/btc-controller/gate.py',
-          'launch',
-          rootDir,
-          'lightningd',
-          `--lightning-dir=${rootDir}`,
+          '/usr/local/libexec/swap-node/package_node.py',
+          '--mainnet', '--profile', 'btc-cln-v1', '--root', rootDir, 'launch',
           `--conf=${rootDir}/config`,
           ...lightningdArgs,
         ],
