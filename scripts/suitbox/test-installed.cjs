@@ -1,8 +1,11 @@
 const assert=require('node:assert/strict'),path=require('node:path');
 const m=require(path.resolve(process.argv[2]));
-assert.equal(m.manifest.version,'#privkeyio:26.6.10:0');
-assert.equal(m.manifest.canMigrateFrom,'=#privkeyio:26.6.10:0 || =26.6.10:0');
-assert.equal(m.manifest.canMigrateTo,'=#privkeyio:26.6.10:0');
+assert.equal(m.manifest.version,'#privkeyio:26.6.10:1');
+const {VersionRange,ExtendedVersion}=require('node:module').createRequire(require.resolve('@start9labs/start-sdk'))('@start9labs/start-core/exver');
+const incoming=VersionRange.parse(m.manifest.canMigrateFrom);
+for(const version of ['26.6.10:0','#privkeyio:26.6.10:0','#privkeyio:26.6.10:1'])assert.ok(incoming.satisfiedBy(ExtendedVersion.parse(version)),version);
+for(const version of ['26.6.9:0','26.6.10:1','26.6.11:0','#privkeyio:26.6.9:0','#legacy:26.6.10:0'])assert.equal(incoming.satisfiedBy(ExtendedVersion.parse(version)),false,version);
+assert.equal(m.manifest.canMigrateTo,'=#privkeyio:26.6.10:1');
 const original=['config','display-seed','experimental','plugins','watchtower','createrune','revoke-runes','delete-gossip-store','reset-password','watchtower-info','watchtower-client-info','rescan-blockchain','node-info','clearnet-vpn','pay-invoice','receive-payment','clboss-status','clboss-ignore-onchain','clboss-notice-onchain','clboss-unmanage'];
 const coordinator=['migrated-admin-init','migrated-review-incoming','migrated-review-outgoing','migrated-grant-confirm','migrated-grant-cancel','migrated-grant-pause','migrated-grant-credential','migrated-grant-status'];
 assert.deepEqual(Object.keys(m.actions.actions).sort(),[...original,...coordinator].sort());

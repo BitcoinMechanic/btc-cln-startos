@@ -2,15 +2,26 @@
 
 ## Swap coordinator candidate
 
-This candidate is being validated for an update from official Core Lightning
-`26.6.10:0`. Keep the existing service and data volume; do not uninstall or
-restore it as part of the update. Existing channels and UI credentials are
-intended to remain in place. An installer has not yet been cleared for use.
+Candidate `#privkeyio:26.6.10:1` supports a checked update from official Core
+Lightning `26.6.10:0` or candidate `#privkeyio:26.6.10:0`. Use the installer
+identified by the accompanying build receipt. Keep the existing service and
+data volume; do not uninstall or restore it as part of the update.
+
+If old BTC swap history is present, the update checks its wallet identity,
+funding, settlement and retirement evidence while the service is stopped. It
+preserves the old records and wallet. If verification fails, keep the records
+and report the error; do not remove files to bypass the check. A controller's
+settled label alone is not sufficient evidence for this update.
 
 Coordinator setup is a separate explicit action. Installation alone does not
 authorize swaps. After update acceptance, review the available channels and
 limits before confirming a grant. Restored or legacy coordinator authority
-cannot be imported through this update.
+cannot be imported through this update. Retained legacy history does not enable
+the old coordinator or grant the new coordinator permission to spend.
+
+After updating, check the installed version, existing UI login, synchronization,
+node identity and channel funding. Confirm the channel is `CHANNELD_NORMAL`,
+then test one small ordinary BTC payment before enabling coordinator features.
 
 An existing Swap Controller is a separate service: leave its version and
 configuration in place during node validation. Check for pending swaps before

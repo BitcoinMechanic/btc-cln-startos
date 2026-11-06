@@ -4,11 +4,33 @@
 
 # Core Lightning on StartOS
 
-This branch prepares `#privkeyio:26.6.10:0` against the exact official
-`26.6.10:0` package. It is an unshipped candidate until packing and readback
-checks finish. The same-volume migration accepts only that official version;
-it checks the existing wallet, database and store without rewriting them.
-Restored wallets, foreign networks and pre-existing swap authority are refused.
+This branch prepares `#privkeyio:26.6.10:1` against exact official `26.6.10:0`
+and the earlier `#privkeyio:26.6.10:0` candidate. Use only an installer with a
+matching build receipt and successful packed readback. Live StartOS acceptance
+of this revision remains pending.
+
+The official-version migration checks the stopped main volume read-only. Clean
+official wallets retain the original admission checks. A volume carrying legacy
+BTC swap records additionally requires schema 284 wallet evidence, full legacy
+contract/digest validation, matching node/secret/funding bindings, consistent
+session enrollment, and terminal gate/payment/HTLC outcomes. Fully archived
+channels must match every funding pin; their deleted per-HTLC history is not
+claimed as observed evidence. Expired, never-accepted published BTC invoices may
+have failed self-payment attempts only when every attempt is failed, has no
+preimage, targets this BTC node and matches the incoming BTC amount. Pending or
+completed attempts and contradictory records are refused.
+
+`scripts/suitbox/legacy/` contains the read-only validator and pinned pure legacy
+contract modules. Run `embed.py` after changing them; the resulting program is
+embedded in signed JavaScript and runs through Python in a temporary container
+with a read-only main-volume mount. The validator never starts lightningd,
+rewrites the database, imports authority, deletes journals, or clears recovery
+markers. Nonempty WAL/journal files require a clean shutdown; they are never
+silently ignored. Restored wallets, unknown schemas, incomplete/on-chain
+protection records, foreign networks and newer foreign authority are refused.
+All legacy records stay in place. Their old plugin methods remain unavailable;
+new coordinator setup and grants require explicit actions in a separate
+namespace. The existing controller has no migration implemented by this update.
 
 The candidate adds explicit coordinator setup, bounded grants and scoped
 credentials through `startos/live/actions.ts`. Installing it does not enroll
@@ -24,6 +46,10 @@ source patch, isolated image recipes and disposable regression fixtures.
 Tests cover the exact migration boundary, official-to-candidate funded channel
 update, ordinary payments, plugin crashes and generated-config startup.
 These do not establish live StartOS acceptance or routed cross-chain swaps.
+Revision :1 reuses the exact :0 native/runtime/UI images. Its additional tests
+cover read-only legacy admission, refusal controls and real disposable BTC
+current/archived wallet evidence wrapped in explicitly synthetic legacy contract
+envelopes. These are not a rerun of funded cross-chain swaps.
 
 The isolated build directory holds the verified official x86_64 installer
 (SHA256 `1429ddd993ff1d78720a875158f6222711e0787a65114c4235759f3638ae8f36`),
@@ -35,6 +61,10 @@ workspace. They never attach to a live StartOS service. `pack.py` requires the
 successful test logs and binds local archives to immutable image IDs;
 `verify-pack.py` checks the packed files against the engine output, sealed
 runtime and official UI and emits the installer checksum and build receipt.
+Those scripts retain the original :0 workflow. For :1, `pack-legacy.py` takes
+the new build directory and the verified :0 build directory, checks the new
+admission/funded-fixture logs, reuses the exact image archives, and compares
+both packed images byte-for-byte with the checksum-pinned :0 installer.
 Do not use the unmodified upstream Dockerfile to build this candidate.
 
 

@@ -1,15 +1,15 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
-import { sdk } from '../sdk'
-import { verifyOfficialBtcUpgrade } from '../utils'
+import { verifyLegacyOfficialBtcUpgrade } from '../live/legacyUpgrade'
 
 export const current = VersionInfo.of({
-  version: '#privkeyio:26.6.10:0',
-  releaseNotes: { en_US: 'Add explicitly enabled, bounded swap coordinator actions to the 26.06.10 security-release baseline. Normal same-volume update from the official 26.6.10:0 package; existing wallet, channels, UI and watchtower data stay in place. Legacy swap authority and restored wallets are not imported.' },
+  version: '#privkeyio:26.6.10:1',
+  releaseNotes: { en_US: 'Add a guarded update from official 26.6.10:0 with retained, fully checked legacy BTC swap journals. Checks the stopped wallet read-only, including archived funding, terminal payment/HTLC evidence and narrowly scoped failed self-payment attempts for expired incoming invoices. Preserves all records and does not import old coordinator authority. Wallet recovery, pending swaps, unknown state and contradictory evidence are refused. Native engine, plugins and UI are unchanged from candidate :0.' },
   migrations: {
     up: IMPOSSIBLE,
     down: IMPOSSIBLE,
     other: {
-      '=26.6.10:0': { up: async () => verifyOfficialBtcUpgrade(sdk.volumes.main.subpath('')) },
+      '=26.6.10:0': { up: async ({ effects }) => verifyLegacyOfficialBtcUpgrade(effects) },
+      '=#privkeyio:26.6.10:0': { up: async () => {} },
     },
   },
 })

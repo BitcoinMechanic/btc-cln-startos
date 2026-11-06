@@ -80,7 +80,7 @@ export function verifyBtcBackend(chain: any, checkpoint: unknown, header: unknow
 }
 
 /** Read-only admission for the exact official 26.6.10:0 same-volume update. */
-export async function verifyOfficialBtcUpgrade(root: string) {
+export async function verifyOfficialBtcUpgrade(root: string, verifyLegacy?: () => Promise<void>) {
   const present = async (path: string) => {
     try { return await lstat(path) } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
@@ -98,11 +98,23 @@ export async function verifyOfficialBtcUpgrade(root: string) {
   const store = JSON.parse(await readFile(join(root, 'store.json'), 'utf8'))
   if (!store || typeof store !== 'object' || store.restore) throw new Error('Finish backup recovery before a coordinator update')
   const refused = ['xbt', 'xbt-regtest', 'regtest', 'testnet', 'signet', 'node-restored.json', 'swap-restored.json',
-    'btc-gate-restored.json', 'forward-pilot-restored.json', 'btc-gate-activation.json', 'coordinator-preparation.json',
-    'forward-pilot.json', 'forward-session.json', 'forward-sessions', 'forward-swaps', 'reverse-session.json',
-    'reverse-sessions', 'reverse-swaps', 'swap-coordinator-v1', 'swap-gate-v1', 'bounded-authority-v1',
+    'btc-gate-restored.json', 'xbt-gate-restored.json', 'forward-pilot-restored.json', 'reverse-pilot-restored.json',
+    'swap-coordinator-v1', 'swap-gate-v1', 'bounded-authority-v1',
     'customer-remote-v1', 'customer-invoices-v1', 'coordinator-admin-v1']
   for (const base of [root, join(root, 'bitcoin')]) {
     for (const rel of refused) if (await present(join(base, rel))) throw new Error('Existing swap, restore or foreign-network state requires a separate reviewed update')
+  }
+  const legacy = ['btc-gate-activation.json', 'coordinator-preparation.json', 'forward-pilot.json',
+    'reverse-pilot.json', 'forward-session.json', 'forward-sessions', 'forward-swaps', 'reverse-session.json',
+    'reverse-sessions', 'reverse-swaps', 'controller-read-only.json', 'controller-gate-read-only.json',
+    'controller-inspection-read-only.json']
+  let hasLegacy = !!(await present(join(root, 'bitcoin/swap-gate')))
+  for (const rel of legacy) {
+    if (await present(join(root, 'bitcoin', rel))) throw new Error('Unsupported nested legacy layout; all records preserved.')
+    if (await present(join(root, rel))) hasLegacy = true
+  }
+  if (hasLegacy) {
+    if (!verifyLegacy) throw new Error('Existing swap, restore or foreign-network state requires a separate reviewed update')
+    await verifyLegacy()
   }
 }
