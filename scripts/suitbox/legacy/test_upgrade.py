@@ -168,6 +168,14 @@ class UpgradeTests(unittest.TestCase):
     def test_wrong_database_version_refused(self):
         self.sql('UPDATE version SET version=285'); self.refused('unsupported_wallet_schema')
 
+    def test_null_states_fail_closed(self):
+        self.attempt(status=None); self.refused('pending_or_unknown_payment')
+        self.sql('DELETE FROM payments')
+        self.sql('UPDATE channels SET state=NULL'); self.refused('channel_transition_or_recovery_in_progress')
+        self.sql('UPDATE channels SET state=10')
+        self.sql('INSERT INTO channel_htlcs VALUES(1,7,0,1000000,1000,?,NULL,NULL)', (bytes.fromhex(PAYMENT),))
+        self.refused('pending_or_unknown_htlc')
+
     def test_reverse_terminal_payment_and_htlc(self):
         for p in (self.root/'forward-swaps').iterdir(): p.unlink()
         for p in (self.root/'forward-sessions').iterdir(): p.unlink()

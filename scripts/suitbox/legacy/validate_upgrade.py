@@ -134,9 +134,9 @@ class Wallet:
         need(self.variable('genesis_hash') == genesis, 'wrong_wallet_network')
         self.node = self.variable('node_id')
         need(type(self.node) is bytes and len(self.node) == 33 and self.node[0] in (2, 3), 'invalid_wallet_identity')
-        need(self.db.execute('SELECT count(*) FROM payments WHERE status NOT IN (1,2)').fetchone()[0] == 0, 'pending_or_unknown_payment')
-        need(self.db.execute('SELECT count(*) FROM channel_htlcs WHERE NOT ((direction=0 AND hstate=19) OR (direction=1 AND hstate=9))').fetchone()[0] == 0, 'pending_or_unknown_htlc')
-        need(self.db.execute('SELECT count(*) FROM channels WHERE state NOT IN (3,10)').fetchone()[0] == 0, 'channel_transition_or_recovery_in_progress')
+        need(self.db.execute('SELECT count(*) FROM payments WHERE status IS NULL OR status NOT IN (1,2)').fetchone()[0] == 0, 'pending_or_unknown_payment')
+        need(self.db.execute('SELECT count(*) FROM channel_htlcs WHERE direction IS NULL OR hstate IS NULL OR NOT ((direction=0 AND hstate=19) OR (direction=1 AND hstate=9))').fetchone()[0] == 0, 'pending_or_unknown_htlc')
+        need(self.db.execute('SELECT count(*) FROM channels WHERE state IS NULL OR state NOT IN (3,10)').fetchone()[0] == 0, 'channel_transition_or_recovery_in_progress')
 
     def variable(self, name):
         rows = self.db.execute('SELECT blobval FROM vars WHERE name=?', (name,)).fetchall()
