@@ -4,6 +4,41 @@
 
 # Core Lightning on StartOS
 
+This branch prepares `#privkeyio:26.6.10:0` against the exact official
+`26.6.10:0` package. It is an unshipped candidate until packing and readback
+checks finish. The same-volume migration accepts only that official version;
+it checks the existing wallet, database and store without rewriting them.
+Restored wallets, foreign networks and pre-existing swap authority are refused.
+
+The candidate adds explicit coordinator setup, bounded grants and scoped
+credentials through `startos/live/actions.ts`. Installing it does not enroll
+the node or authorize swaps. The sealed launcher runs from the image, never
+from the data volume. Backups exclude coordinator authority and restore writes
+a fence preventing reuse of old authority.
+
+Native changes target upstream v26.06.10: important-plugin shutdown ordering,
+restricted final-HTLC replay during closing, and recovery witness-weight
+estimation. The official Rust plugins, third-party plugins and UI are retained.
+`patches/btc-26.06.10-swap-safety.patch` and `scripts/suitbox/` contain the
+source patch, isolated image recipes and disposable regression fixtures.
+Tests cover the exact migration boundary, official-to-candidate funded channel
+update, ordinary payments, plugin crashes and generated-config startup.
+These do not establish live StartOS acceptance or routed cross-chain swaps.
+
+The isolated build directory holds the verified official x86_64 installer
+(SHA256 `1429ddd993ff1d78720a875158f6222711e0787a65114c4235759f3638ae8f36`),
+verified upstream source zip
+(`4914561e6d108dacca0183d7e6b3b1c224c580597ddcbb397299ef5b0fcc3230`),
+`package/` source export, engine/runtime/harness recipes, and test receipts.
+Run the scripts from a copy in that directory inside the existing packaging
+workspace. They never attach to a live StartOS service. `pack.py` requires the
+successful test logs and binds local archives to immutable image IDs;
+`verify-pack.py` checks the packed files against the engine output, sealed
+runtime and official UI and emits the installer checksum and build receipt.
+Do not use the unmodified upstream Dockerfile to build this candidate.
+
+
+
 > Everything not listed in this document should behave the same as upstream
 > Core Lightning. If a feature, setting, or behavior is not mentioned here, the
 > upstream documentation is accurate and fully applicable — see the

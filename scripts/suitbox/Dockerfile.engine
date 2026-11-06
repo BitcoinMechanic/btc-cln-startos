@@ -1,0 +1,11 @@
+# Cached, verified bookworm builder with Rust 1.92 and native CLN dependencies.
+FROM swap-recovery-engine:0088b-f2b3a4cd3108 AS builder
+WORKDIR /btc26
+COPY clightning-v26.06.10.zip /btc26/source.zip
+RUN echo '4914561e6d108dacca0183d7e6b3b1c224c580597ddcbb397299ef5b0fcc3230  source.zip' | sha256sum -c - && unzip -q source.zip
+WORKDIR /btc26/clightning-v26.06.10
+COPY test-recovery-weight.c bitcoin/test/run-btc-recovery-weight.c
+COPY c-only.mk /btc26/c-only.mk
+RUN ./configure --prefix=/usr/local --enable-rust --disable-valgrind && make -j8 bitcoin/test/run-btc-recovery-weight VERSION=v26.06.10 && bitcoin/test/run-btc-recovery-weight --expect-underestimate > /btc26/baseline-weight.txt
+COPY btc-26.06.10-swap-safety.patch /btc26/safety.patch
+RUN git apply --check /btc26/safety.patch && git apply /btc26/safety.patch && make -j8 -f Makefile -f /btc26/c-only.mk install-c-runtime bitcoin/test/run-btc-recovery-weight DESTDIR=/dist VERSION=v26.06.10-suitbox1 && bitcoin/test/run-btc-recovery-weight > /btc26/patched-weight.txt

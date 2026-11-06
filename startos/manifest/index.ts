@@ -5,7 +5,7 @@ export const manifest = setupManifest({
   id: 'c-lightning',
   title: 'Core Lightning',
   license: 'mit',
-  packageRepo: 'https://github.com/Start9Labs/cln-startos',
+  packageRepo: 'https://github.com/BitcoinMechanic/btc-cln-startos',
   upstreamRepo: 'https://github.com/ElementsProject/lightning',
   marketingUrl: 'https://blockstream.com/lightning',
   donationUrl: null,
@@ -16,12 +16,12 @@ export const manifest = setupManifest({
     lightning: {
       source: {
         dockerBuild: {
-          dockerfile: 'Dockerfile',
+          dockerfile: 'scripts/suitbox/Dockerfile.runtime',
           workdir: '.',
         },
       },
-      arch: ['x86_64', 'aarch64'],
-      emulateMissing: true,
+      arch: ['x86_64'],
+      emulateMissing: false,
     },
     ui: {
       source: {
@@ -34,8 +34,8 @@ export const manifest = setupManifest({
           },
         },
       },
-      arch: ['x86_64', 'aarch64'],
-      emulateMissing: true,
+      arch: ['x86_64'],
+      emulateMissing: false,
     },
   },
 })

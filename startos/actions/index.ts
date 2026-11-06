@@ -1,4 +1,5 @@
 import { sdk } from '../sdk'
+import { createActions } from '../live/actions'
 import { experimental } from './config/experimental'
 import { config } from './config/config'
 import { plugins } from './config/plugins'
@@ -22,7 +23,7 @@ import {
   clbossUnmanage,
 } from './clboss'
 
-export const actions = sdk.Actions.of()
+const nodeActions = sdk.Actions.of()
   .addAction(config)
   .addAction(displaySeed)
   .addAction(experimental)
@@ -45,3 +46,5 @@ export const actions = sdk.Actions.of()
   .addAction(clbossUnmanage)
 
 // @TODO generate-lnlink
+
+export const actions = createActions(undefined, nodeActions)

@@ -1,0 +1,8 @@
+FROM suitbox-cln-official:26.6.10 AS original
+FROM suitbox-cln-runtime:26.06.10-suitbox1
+COPY --from=original /usr/local/ /opt/btc-before/
+COPY bitcoind /usr/local/bin/bitcoind
+COPY fixture-swap/ /opt/swap-fixture/
+COPY test-funded-upgrade.py /opt/test-funded-upgrade.py
+ENV PYTHONPATH=/opt/swap-fixture
+RUN /usr/local/bin/bitcoind --version && /opt/btc-before/bin/lightningd --version && /opt/btc/bin/lightningd --version

@@ -1,5 +1,21 @@
 # Core Lightning
 
+## Swap coordinator candidate
+
+This candidate is being validated for an update from official Core Lightning
+`26.6.10:0`. Keep the existing service and data volume; do not uninstall or
+restore it as part of the update. Existing channels and UI credentials are
+intended to remain in place. An installer has not yet been cleared for use.
+
+Coordinator setup is a separate explicit action. Installation alone does not
+authorize swaps. After update acceptance, review the available channels and
+limits before confirming a grant. Restored or legacy coordinator authority
+cannot be imported through this update.
+
+An existing Swap Controller is a separate service: leave its version and
+configuration in place during node validation. Check for pending swaps before
+changing its connections or credentials.
+
 ## Documentation
 
 - [Start9 Bitcoin Guides](https://docs.start9.com/bitcoin-guides/) — connecting wallets and dashboards to a Lightning node on StartOS, and how that node reaches Bitcoin.

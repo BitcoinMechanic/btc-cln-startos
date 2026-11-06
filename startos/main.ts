@@ -16,6 +16,7 @@ import { vpnConfFile } from './fileModels/vpn.conf'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
 import {
+  verifyBtcBackend,
   bitcoinDataDir,
   bitcoindRpcBridge,
   clnrestPort,
@@ -144,20 +145,37 @@ export const main = sdk.setupMain(async ({ effects }) => {
     .digest('hex')
 
   const baseDaemons = sdk.Daemons.of(effects)
+    .addOneshot('btc-backend-identity', {
+      subcontainer: lightningSub,
+      requires: [],
+      exec: { fn: async () => {
+        if (!bitcoind) throw new Error('BTC backend connection unavailable')
+        const rpc = async (method: string, ...args: string[]) => {
+          const r = await lightningSub.exec(['bitcoin-cli', `-rpcconnect=${bitcoind.host}`, `-rpcport=${bitcoind.port}`,
+            '-rpccookiefile=/mnt/bitcoin/.cookie', method, ...args])
+          if (r.exitCode !== 0) throw new Error('BTC backend inspection unavailable')
+          return String(r.stdout).trim()
+        }
+        const chain = JSON.parse(await rpc('getblockchaininfo'))
+        const hash = await rpc('getblockhash', '961640')
+        verifyBtcBackend(chain, hash, await rpc('getblockheader', hash, 'false'))
+        return null
+      } },
+    })
     .addOneshot('vpn', {
       subcontainer: lightningSub,
       exec: {
         command: ['sh', '-c', vpn ? vpnUpScript : vpnDownScript],
         env: { STARTOS_VPN_CONFIG_HASH: vpnConfigHash },
       },
-      requires: [],
+      requires: ['btc-backend-identity'],
     })
     .addDaemon('lightningd', {
       subcontainer: lightningSub,
       exec: {
         command: [
-          'lightningd',
-          `--lightning-dir=${rootDir}`,
+          '/usr/local/libexec/swap-node/package_node.py',
+          '--mainnet', '--profile', 'btc-cln-v1', '--root', rootDir, 'launch',
           `--conf=${rootDir}/config`,
           ...lightningdArgs,
         ],

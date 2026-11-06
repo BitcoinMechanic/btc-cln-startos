@@ -1,0 +1,14 @@
+ARG OFFICIAL_IMAGE=suitbox-cln-official:26.6.10
+ARG ENGINE_IMAGE=suitbox-cln-engine:26.06.10-suitbox1
+ARG RUNTIME_IMAGE=swap0102-built-btc-a:1e1599eb98b2fcccdb8d12dd0039fa0a6a41fa1fa209f4945e5ece88ef681e37
+FROM ${ENGINE_IMAGE} AS engine
+FROM ${RUNTIME_IMAGE} AS swap
+FROM ${OFFICIAL_IMAGE}
+USER root
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
+COPY --from=engine /dist/usr/local/ /usr/local/
+COPY --from=swap /usr/local/libexec/swap-node/ /usr/local/libexec/swap-node/
+RUN mkdir -p /opt && ln -s /usr/local /opt/btc && lightningd --version && test -x /usr/local/libexec/c-lightning/plugins/cln-grpc && test -x /usr/local/libexec/c-lightning/plugins/clnrest
+
+CMD ["bash"]
