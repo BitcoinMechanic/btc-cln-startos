@@ -432,3 +432,7 @@ health_checks:
   - vpn-tunnel # displayed "Clearnet VPN"; only while a tunnel is configured; last-handshake age
   - restored # only after an emergency recovery
 ```
+
+Retire unused outgoing swap authority without waiting for the recipient invoice to expire. Requires no send intent and fresh unused-payment/channel checks; permanently prevents later sending and preserves budgets, records, wallets and channels.
+
+For the expiry-workflow release, update the BTC and XBT coordinator packages before the controller. Existing unpaid expired swaps are then retired automatically after fresh unused-authority checks; no journal deletion or initialization is needed. Retired enrollments still consume their original grant slot and budget. A later swap may require a newly reviewed grant. Ten-minute pricing applies only to new controller quotes; never pay a previously expired invoice.

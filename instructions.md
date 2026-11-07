@@ -131,3 +131,7 @@ The old node must run the same Core Lightning version as this service or an olde
 - **Mainnet only.** Testnet, signet, and regtest are not exposed.
 - **Bitcoin authentication is cookie-based.** `bitcoin-rpcuser` and `bitcoin-rpcpassword` are intentionally not configurable; CLN uses the mounted Bitcoin cookie file.
 - **The `config` file is managed through actions.** Manual edits will be overwritten on the next config sync.
+
+Retire unused outgoing swap authority without waiting for the recipient invoice to expire. Requires no send intent and fresh unused-payment/channel checks; permanently prevents later sending and preserves budgets, records, wallets and channels.
+
+For the expiry-workflow release, update the BTC and XBT coordinator packages before the controller. Existing unpaid expired swaps are then retired automatically after fresh unused-authority checks; no journal deletion or initialization is needed. Retired enrollments still consume their original grant slot and budget. A later swap may require a newly reviewed grant. Ten-minute pricing applies only to new controller quotes; never pay a previously expired invoice.
