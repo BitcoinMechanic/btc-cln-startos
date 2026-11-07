@@ -1,3 +1,5 @@
+import { publicationDaemon } from './live/localController'
+import { profile as coordinatorProfile, rawInvoke as coordinatorCall } from './live/actions'
 import { FileHelper } from '@start9labs/start-sdk'
 import { manifest as bitcoinManifest } from 'bitcoin-core-startos/startos/manifest'
 import { createHash } from 'node:crypto'
@@ -810,4 +812,5 @@ export const main = sdk.setupMain(async ({ effects }) => {
           }
         : null,
     )
+    .addDaemon('local-controller-publication', publicationDaemon(effects, coordinatorProfile, coordinatorCall))
 })
