@@ -1,7 +1,6 @@
 import { publicationDaemon } from './live/localController'
 import { profile as coordinatorProfile, rawInvoke as coordinatorCall } from './live/actions'
 import { FileHelper } from '@start9labs/start-sdk'
-import { manifest as bitcoinManifest } from 'bitcoin-core-startos/startos/manifest'
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import {
@@ -19,6 +18,7 @@ import { i18n } from './i18n'
 import { sdk } from './sdk'
 import {
   verifyBtcBackend,
+  verifyBtcHistory,
   bitcoinDataDir,
   bitcoindRpcBridge,
   clnrestPort,
@@ -104,8 +104,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const lightningSub = sdk.SubContainer.of(
     effects,
     { imageId: 'lightning' },
-    mainMounts.mountDependency<typeof bitcoinManifest>({
-      dependencyId: 'bitcoind',
+    mainMounts.mountDependency({
+      dependencyId: 'knots-prerdts',
       mountpoint: bitcoinDataDir,
       subpath: null,
       readonly: true,
@@ -154,13 +154,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
         if (!bitcoind) throw new Error('BTC backend connection unavailable')
         const rpc = async (method: string, ...args: string[]) => {
           const r = await lightningSub.exec(['bitcoin-cli', `-rpcconnect=${bitcoind.host}`, `-rpcport=${bitcoind.port}`,
-            '-rpccookiefile=/mnt/bitcoin/.cookie', method, ...args])
+            '-rpccookiefile=/mnt/bitcoin/.cookie', '-rpcclienttimeout=60', method, ...args], { timeout: 70000 })
           if (r.exitCode !== 0) throw new Error('BTC backend inspection unavailable')
           return String(r.stdout).trim()
         }
         const chain = JSON.parse(await rpc('getblockchaininfo'))
         const hash = await rpc('getblockhash', '961640')
         verifyBtcBackend(chain, hash, await rpc('getblockheader', hash, 'false'))
+        try { await verifyBtcHistory(chain, rpc) } catch {
+          throw new Error('Historical BTC blocks unavailable through fetching proxy. Check backend peers and retry; preserve Lightning state.')
+        }
         return null
       } },
     })

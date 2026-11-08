@@ -457,3 +457,20 @@ This does not open channels, fund liquidity, approve grants or raise spending li
 The controller preserves manual pairings and waits for active swaps to finish before
 selecting changed local grants. Older packages without this connection contract
 continue to require manual pairing.
+
+## SHA256 companion build for e3
+
+This build uses **knots-prerdts #knotsprerdts:31.2:0 or newer** as its required
+Bitcoin backend. It does not select the `bitcoind` service. The normal RPC binding
+resolves to Paul's fetching proxy; the direct RPC-local binding is not used.
+Credentials are read from the companion's main volume through a read-only mount.
+
+Pruning can stay enabled. Before starting CLN, the package verifies SHA256 chain
+identity and retrieves a historical block through the proxy. Missing historical
+blocks delay startup until archival peers become available. Preserve wallet/channel
+state while reconnecting; do not reset it to recover from a backend outage.
+
+The swap coordinator, approved-grant sharing and local Swap Controller integration
+remain included. This retains service ID `c-lightning`; it is not a second BTC CLN
+instance. Use this companion build on e3, not as an update to a box whose BTC backend
+is only `bitcoind`. Existing migration and restore admission checks still apply.

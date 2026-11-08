@@ -3,7 +3,7 @@ import { long, short } from './i18n'
 
 export const manifest = setupManifest({
   id: 'c-lightning',
-  title: 'Core Lightning',
+  title: 'Core Lightning (SHA256 Companion)',
   license: 'mit',
   packageRepo: 'https://github.com/BitcoinMechanic/btc-cln-startos',
   upstreamRepo: 'https://github.com/ElementsProject/lightning',

@@ -45,37 +45,33 @@ export const errorMessage = (res: { stdout: unknown; stderr: unknown }) => {
   return parsed?.message ? String(parsed.message) : raw || 'unknown'
 }
 
-/**
- * bitcoind's RPC bridge address, resolved through `sdk.host.getBridgeAddress` and
- * split into the `{ host, port }` pair lightningd's config, teos.toml, and the
- * sync health check consume. `.const()` stays churn-free: bitcoind's assigned
- * RPC port persists across its updates/restarts, so CLN restarts only if
- * bitcoind is (re)installed on a new port. `null` while bitcoind's binding is
- * absent, so callers omit the address rather than writing a placeholder.
+/** Paul's SHA256 companion: RPC host `rpc`, internal port 8332 resolves to
+ * the fetching proxy. Never use rpc-local/58332, which bypasses block fetching.
+ * Keep the exported helper name for existing package consumers.
  */
 export const bitcoindRpcBridge = async (effects: T.Effects) => {
   const addr = await sdk.host
     .getBridgeAddress(effects, {
-      packageId: 'bitcoind',
+      packageId: 'knots-prerdts',
       hostId: btcRpcHostId,
       internalPort: btcRpcPort,
       ssl: false,
     })
     .const()
   if (!addr) return null
-  const [host, port] = addr.split(':')
-  return { host, port: Number(port) }
+  const url = new URL('http://' + addr)
+  return { host: url.hostname.replace(/^\[|\]$/g, ''), port: Number(url.port || 80) }
 }
 
 // Network/genesis alone are shared with XBT. Require the configured SHA256
 // backend's post-activation header shape as well, before starting this engine.
 export function verifyBtcBackend(chain: any, checkpoint: unknown, header: unknown) {
-  if (chain?.chain !== 'main' || chain.initialblockdownload !== false || chain.pruned !== false ||
+  if (chain?.chain !== 'main' || chain.initialblockdownload !== false || !(chain.pruned === false || (chain.pruned === true && Number.isSafeInteger(chain.pruneheight) && chain.pruneheight >= 0 && chain.pruneheight <= chain.blocks)) ||
       !Number.isSafeInteger(chain.blocks) || chain.blocks < 961640 ||
       typeof checkpoint !== 'string' || !/^[0-9a-f]{64}$/.test(checkpoint) ||
       checkpoint === '0000000000000050c1e5f69672f459293be14f46e5a494e7a8c8541396f18eeb' ||
       typeof header !== 'string' || !/^[0-9a-f]{160}$/.test(header)) {
-    throw new Error('BTC requires a synced, unpruned SHA256 mainnet backend')
+    throw new Error('BTC requires a synced SHA256 mainnet backend with valid pruning metadata')
   }
 }
 
@@ -117,4 +113,14 @@ export async function verifyOfficialBtcUpgrade(root: string, verifyLegacy?: () =
     if (!verifyLegacy) throw new Error('Existing swap, restore or foreign-network state requires a separate reviewed update')
     await verifyLegacy()
   }
+}
+
+/** Probe a discarded block through the same authenticated proxy CLN will use. */
+export async function verifyBtcHistory(chain: any, rpc: (method: string, ...args: string[]) => Promise<string>) {
+  if (chain.pruned !== true) return
+  const height = Math.min(961640, Math.max(1, chain.pruneheight - 1))
+  const hash = await rpc('getblockhash', String(height))
+  if (!/^[0-9a-f]{64}$/.test(hash)) throw new Error('Historical BTC block lookup unavailable')
+  const raw = await rpc('getblock', hash, '0')
+  if (raw.length < 162 || raw.length > 32000000 || raw.length % 2 || !/^[0-9a-f]+$/i.test(raw)) throw new Error('Historical BTC block unavailable')
 }
