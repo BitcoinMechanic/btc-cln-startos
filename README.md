@@ -496,7 +496,9 @@ remain included. This retains service ID `c-lightning`; it is not a second BTC C
 instance. Use this companion build on e3, not as an update to a box whose BTC backend
 is only `bitcoind`. Existing migration and restore admission checks still apply.
 
-Recipient invoice timelocks (including 80 blocks) are supported within the existing 288-block total route budget. The final hop must match the invoice, and the incoming swap deadline includes the outgoing route delay plus the existing recovery margin. Invoice timing, amount, timelock and route refusals have specific messages; unknown or uncertain failures remain private.
+Recipient invoice timelocks (including 80 blocks) are supported within the 576-block total route budget. The final hop must match the invoice, and the incoming swap deadline includes the outgoing route delay plus the existing recovery margin. Invoice timing, amount, timelock and route refusals have specific messages; unknown or uncertain failures remain private.
 An unknown recipient with no routing hints is reported separately: create a fresh invoice in the connected receiving wallet with private-channel route hints enabled. Increasing fees does not supply missing routes.
 
 The reviewed runtime delta is in `patches/timelock-patches.json`. Stage it with `python3 patches/stage-timelock-runtime.py <runtime-directory>` before image packaging; the script requires exact source matches and refreshes the sealed manifest hashes. Existing swap journals are not migrated.
+
+New automatically managed outgoing grants allow up to 576 blocks of route delay. Existing idle managed grants refresh automatically; active recovery and manual grants are preserved. Incoming swap deadlines still cover the actual outgoing route delay plus 144 recovery blocks and 6 propagation blocks. Fee and hop limits are unchanged.
