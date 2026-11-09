@@ -12,3 +12,6 @@ COPY --from=swap /usr/local/libexec/swap-node/ /usr/local/libexec/swap-node/
 RUN mkdir -p /opt && ln -s /usr/local /opt/btc && lightningd --version && test -x /usr/local/libexec/c-lightning/plugins/cln-grpc && test -x /usr/local/libexec/c-lightning/plugins/clnrest
 
 CMD ["bash"]
+
+# Local administrator trust manager; leave the verified swap runtime unchanged.
+COPY assets/local_controller_trust.py /usr/local/libexec/local-controller-trust.py
