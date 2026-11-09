@@ -13,5 +13,8 @@ RUN mkdir -p /opt && ln -s /usr/local /opt/btc && lightningd --version && test -
 
 CMD ["bash"]
 
-# Local administrator trust manager; leave the verified swap runtime unchanged.
+# Local administrator trust manager; sealed compatibility patches are applied below.
 COPY assets/local_controller_trust.py /usr/local/libexec/local-controller-trust.py
+
+COPY patches/ /tmp/swap-timelock-patches/
+RUN python3 /tmp/swap-timelock-patches/stage-timelock-runtime.py /usr/local/libexec/swap-node && rm -rf /tmp/swap-timelock-patches
