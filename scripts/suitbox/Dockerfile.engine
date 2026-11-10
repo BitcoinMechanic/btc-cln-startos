@@ -9,3 +9,8 @@ COPY c-only.mk /btc26/c-only.mk
 RUN ./configure --prefix=/usr/local --enable-rust --disable-valgrind && make -j8 bitcoin/test/run-btc-recovery-weight VERSION=v26.06.10 && bitcoin/test/run-btc-recovery-weight --expect-underestimate > /btc26/baseline-weight.txt
 COPY btc-26.06.10-swap-safety.patch /btc26/safety.patch
 RUN git apply --check /btc26/safety.patch && git apply /btc26/safety.patch && make -j8 -f Makefile -f /btc26/c-only.mk install-c-runtime bitcoin/test/run-btc-recovery-weight DESTDIR=/dist VERSION=v26.06.10-suitbox1 && bitcoin/test/run-btc-recovery-weight > /btc26/patched-weight.txt
+
+# Read-loop liveness after gossip is discarded: preserve the upstream size limits.
+COPY btc-26.06.10-gossip-wakeup.patch /btc26/gossip-wakeup.patch
+COPY test-gossip-wakeup.py /btc26/test-gossip-wakeup.py
+RUN git apply --check /btc26/gossip-wakeup.patch && git apply /btc26/gossip-wakeup.patch && python3 /btc26/test-gossip-wakeup.py connectd/multiplex.c && make -j8 lightningd/lightning_connectd VERSION=v26.06.10-suitbox1 && cp lightningd/lightning_connectd /dist/usr/local/libexec/c-lightning/lightning_connectd

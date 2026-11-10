@@ -1,0 +1,8 @@
+# Test-only dependencies; wire.py and primitives.py come from the pinned CLN source.
+ARG PATCHED_ENGINE=suitbox-cln-engine:26.06.10-suitbox2
+FROM ${PATCHED_ENGINE} AS patched
+FROM suitbox-cln-harness:26.06.10-suitbox1
+RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && python3 -m venv /wirevenv && /wirevenv/bin/pip install cffi==2.1.1 coincurve==21.0.0 cryptography==50.0.2 pycparser==3.12 PySocks==1.7.1
+COPY --from=patched /dist/usr/local/libexec/c-lightning/lightning_connectd /patched/lightning_connectd
+COPY wire.py primitives.py /wirelib/
+COPY test-gossip-wakeup-wire.py /test-gossip-wakeup-wire.py
