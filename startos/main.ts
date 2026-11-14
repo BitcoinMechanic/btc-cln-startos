@@ -20,6 +20,7 @@ import {
   verifyBtcBackend,
   verifyBtcHistory,
   bitcoinDataDir,
+  btcBackendId,
   bitcoindRpcBridge,
   clnrestPort,
   errorMessage,
@@ -105,7 +106,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     effects,
     { imageId: 'lightning' },
     mainMounts.mountDependency({
-      dependencyId: 'knots-prerdts',
+      dependencyId: await btcBackendId(effects),
       mountpoint: bitcoinDataDir,
       subpath: null,
       readonly: true,
@@ -162,7 +163,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
         const hash = await rpc('getblockhash', '961640')
         verifyBtcBackend(chain, hash, await rpc('getblockheader', hash, 'false'))
         try { await verifyBtcHistory(chain, rpc) } catch {
-          throw new Error('Historical BTC blocks unavailable through fetching proxy. Check backend peers and retry; preserve Lightning state.')
+          throw new Error('Historical BTC blocks unavailable from the selected backend. Use an archival Bitcoin backend or a working historical-block fetching proxy; preserve Lightning state.')
         }
         return null
       } },

@@ -45,14 +45,24 @@ export const errorMessage = (res: { stdout: unknown; stderr: unknown }) => {
   return parsed?.message ? String(parsed.message) : raw || 'unknown'
 }
 
-/** Paul's SHA256 companion: RPC host `rpc`, internal port 8332 resolves to
- * the fetching proxy. Never use rpc-local/58332, which bypasses block fetching.
- * Keep the exported helper name for existing package consumers.
+/** Prefer the companion when installed, even while stopped or reconnecting.
+ * RPC availability must not switch a funded Lightning node to another backend.
+ */
+export const btcBackendId = async (effects: T.Effects): Promise<'knots-prerdts' | 'bitcoind'> => {
+  const companionInstalled = await sdk.getServiceManifest(
+    effects, 'knots-prerdts', manifest => manifest !== null,
+  ).const()
+  return companionInstalled ? 'knots-prerdts' : 'bitcoind'
+}
+
+/** The companion's normal RPC binding includes historical-block fetching.
+ * Resolve the selected service's normal RPC binding, never rpc-local/58332.
  */
 export const bitcoindRpcBridge = async (effects: T.Effects) => {
+  const packageId = await btcBackendId(effects)
   const addr = await sdk.host
     .getBridgeAddress(effects, {
-      packageId: 'knots-prerdts',
+      packageId,
       hostId: btcRpcHostId,
       internalPort: btcRpcPort,
       ssl: false,

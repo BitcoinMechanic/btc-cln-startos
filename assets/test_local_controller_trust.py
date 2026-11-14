@@ -22,6 +22,19 @@ class TrustTests(AdminTests):
                    spendable_msat=2000000000,receivable_msat=2000000000)
         self.node.rows.append(row)
         return row
+    def test_smaller_ready_channel_remains_eligible_below_grant_ceiling(self):
+        self.node.rows[0].update(spendable_msat=300000000,receivable_msat=300000000)
+        self.trust.maintain();old=copy.deepcopy(self.auth.record['current'])
+        small=self.extra_channel();small.update(spendable_msat=65296000,receivable_msat=30000000)
+        self.trust.maintain()
+        for kind in ba.KINDS:
+            g=self.auth.record['grants'][self.auth.record['current'][kind]]['terms']
+            self.assertIn(small['channel_id'],[p['channel_id'] for p in g['channels']])
+            self.assertEqual(g['limits']['max_amount_msat'],100000000)
+            self.assertNotEqual(old[kind],self.auth.record['current'][kind])
+        stable=copy.deepcopy(self.auth.record['current']);self.trust.maintain()
+        self.assertEqual(stable,self.auth.record['current'])
+
     def test_closed_historical_channel_does_not_block_renewal(self):
         self.trust.maintain();old=copy.deepcopy(self.auth.record['current'])
         gid=old['outgoing'];data=self.node.plan();self.node.plan_value=data

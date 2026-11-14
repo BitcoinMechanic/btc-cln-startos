@@ -449,7 +449,7 @@ Legacy sharing-only opt-ins remain sharing-only until you explicitly enable trus
 The node creates incoming and outgoing scoped grants when suitable connected
 channels have liquidity. Each grant lasts up to 24 hours and renews automatically
 near expiry or when its remaining budget is too small for another maximum swap.
-The default ceiling is 10,000 sats per swap, four swaps and 30,000 sats per grant
+The default ceiling is 100,000 sats per swap, four swaps and 300,000 sats per grant
 (or less when liquidity is lower), with a 10-sat outgoing fee limit. These are
 per-grant limits, not lifetime spending limits: continuing trust authorizes renewal.
 Incoming protection may close the receiving channel 72 blocks before its deadline.
@@ -481,20 +481,23 @@ only enable, maintain and disable operations to local package administration.
 
 ## SHA256 companion build for e3
 
-This build uses **knots-prerdts #knotsprerdts:31.2:0 or newer** as its required
-Bitcoin backend. It does not select the `bitcoind` service. The normal RPC binding
-resolves to Paul's fetching proxy; the direct RPC-local binding is not used.
-Credentials are read from the companion's main volume through a read-only mount.
+This build prefers **knots-prerdts #knotsprerdts:31.2:0 or newer** when
+installed. Otherwise it uses the **Bitcoin service (`bitcoind`)**. An installed
+companion that is stopped or reconnecting remains selected; a temporary outage
+never causes a switch to the other service. RPC, the read-only authentication
+cookie mount, synchronization checks, and watchtower use the same selection.
 
-Pruning can stay enabled. Before starting CLN, the package verifies SHA256 chain
-identity and retrieves a historical block through the proxy. Missing historical
-blocks delay startup until archival peers become available. Preserve wallet/channel
-state while reconnecting; do not reset it to recover from a backend outage.
+The backend must serve the synced **BTC SHA256 mainnet** chain. An XBT instance
+under the `bitcoind` service ID is rejected by the chain-identity check.
+The companion's normal RPC binding uses its historical-block fetching proxy;
+the direct RPC-local binding is not used. A plain `bitcoind` backend must retain
+historical blocks, or provide compatible historical-block fetching. A pruned
+backend that cannot supply the required historical blocks will prevent startup.
+Preserve wallet/channel state while resolving a backend outage; do not reset it.
 
 The swap coordinator, approved-grant sharing and local Swap Controller integration
-remain included. This retains service ID `c-lightning`; it is not a second BTC CLN
-instance. Use this companion build on e3, not as an update to a box whose BTC backend
-is only `bitcoind`. Existing migration and restore admission checks still apply.
+remain included. The service ID remains `c-lightning`. Existing migration and
+restore admission checks still apply.
 
 Recipient invoice timelocks (including 80 blocks) are supported within the 576-block total route budget. The final hop must match the invoice, and the incoming swap deadline includes the outgoing route delay plus the existing recovery margin. Invoice timing, amount, timelock and route refusals have specific messages; unknown or uncertain failures remain private.
 An unknown recipient with no routing hints is reported separately: create a fresh invoice in the connected receiving wallet with private-channel route hints enabled. Increasing fees does not supply missing routes.
@@ -508,3 +511,11 @@ Incoming swap checks report why no approved channel can receive safely: connecti
 Package 26.6.10:10 fixes a connectd read-loop stall when gossip is discarded (oversized announcement or full gossip queue). The receive path waits for the writer to resume it, so all discard paths must wake the writer. The fix preserves gossip size/queue limits, ping deadlines and payment checks. Engine source patch: `patches/btc-26.06.10-gossip-wakeup.patch`; the engine build context also needs `scripts/suitbox/test-gossip-wakeup.py`. Build the updated engine as `suitbox-cln-engine:26.06.10-suitbox2` before rebuilding the runtime. Tests exercise both C discard paths and a disposable encrypted BOLT8 peer sending oversized announcements followed by pings.
 
 Idle automatic grants refresh when approved channels close or additional ready channels become available. Completed swap receipts with matching closed-channel evidence no longer require the old channel to remain open. Live-channel history checks, unfinished swaps, manual grants and pauses remain protected; temporary disconnects and liquidity changes do not churn channel scopes.
+
+Automatic controller grants include smaller ready channels for payments within their liquidity, even when those channels cannot carry the full per-swap policy maximum. Each planned payment still checks its selected channel liquidity.
+
+Lightning invoices may be all lowercase or all uppercase. Mixed-case invoices are rejected; network, signature, amount and expiry checks still apply.
+
+Settlement also accepts the lowercase form Core Lightning stores for an uppercase invoice. Saved plans remain unchanged; payment hash, recipient, amounts and original attempt identity must still match.
+
+Route planning distinguishes unknown route-hint entry nodes from hint fee, delay and hop limits. It reports hint counts and saved limits; an unresolved route search is not proof that a fee limit was exceeded. Private paths may require multiple hinted hops to reach a public node. No payment is sent during planning.
