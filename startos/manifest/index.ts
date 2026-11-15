@@ -14,26 +14,12 @@ export const manifest = setupManifest({
   virtualNetworking: true,
   images: {
     lightning: {
-      source: {
-        dockerBuild: {
-          dockerfile: 'scripts/suitbox/Dockerfile.runtime',
-          workdir: '.',
-        },
-      },
+      source: { ociLayout: { path: '.build-inputs/lightning-x86_64.tar' } },
       arch: ['x86_64'],
       emulateMissing: false,
     },
     ui: {
-      source: {
-        dockerBuild: {
-          dockerfile: 'Dockerfile.ui',
-          workdir: '.',
-          buildArgs: {
-            IMAGE:
-              'ghcr.io/elementsproject/cln-application:26.09@sha256:27684e8e495d077ce661793f74b25d50c2e40f68552cb1ba57d6750dd2585798',
-          },
-        },
-      },
+      source: { ociLayout: { path: '.build-inputs/ui-x86_64.tar' } },
       arch: ['x86_64'],
       emulateMissing: false,
     },
