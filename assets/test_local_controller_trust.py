@@ -30,7 +30,7 @@ class TrustTests(AdminTests):
         for kind in ba.KINDS:
             g=self.auth.record['grants'][self.auth.record['current'][kind]]['terms']
             self.assertIn(small['channel_id'],[p['channel_id'] for p in g['channels']])
-            self.assertEqual(g['limits']['max_amount_msat'],100000000)
+            self.assertEqual(g['limits']['max_amount_msat'],300000000-(10000 if kind=='outgoing' else 0))
             self.assertNotEqual(old[kind],self.auth.record['current'][kind])
         stable=copy.deepcopy(self.auth.record['current']);self.trust.maintain()
         self.assertEqual(stable,self.auth.record['current'])

@@ -108,13 +108,13 @@ class Trust:
             except (ValueError,KeyError,TypeError):continue
             usable.append((available-fee,pin))
         if not usable:return None
-        amount=min(100000000,max(n for n,_ in usable))//1000*1000
+        amount=max(n for n,_ in usable)//1000*1000
         # The per-swap ceiling is a maximum, not a minimum channel size.
         # Keep smaller channels eligible for smaller payments. Route admission
         # still checks actual spendable/receivable liquidity on the selected pin.
         selected=sorted(usable,key=lambda item:(-item[0],item[1]['channel_id']))[:8]
         pins=sorted((p for _,p in selected),key=lambda p:p['channel_id'])
-        limits=dict(max_swaps=4,max_amount_msat=amount,total_amount_msat=amount*3)
+        limits=dict(max_swaps=4,max_amount_msat=amount,total_amount_msat=min(amount*3,2**63-1))
         limits.update(dict(min_cltv_delta=350,max_cltv_delta=2016,close_before_blocks=72) if kind=='incoming'
                       else dict(max_fee_msat=fee,max_delay_blocks=576,max_hops=4))
         now=int(self.admin.clock())
@@ -161,8 +161,7 @@ class Trust:
                     if candidate and (retired or old_ids < new_ids):
                         replacement=candidate
                 # Promote idle, automatically owned authority when liquidity permits.
-                if (gid in self.r['owned'] and not item['paused']
-                        and g['limits']['max_amount_msat']==10000000):
+                if gid in self.r['owned'] and not item['paused']:
                     candidate=self.plan(kind)
                     if candidate and candidate['limits']['max_amount_msat']>g['limits']['max_amount_msat']:
                         replacement=candidate

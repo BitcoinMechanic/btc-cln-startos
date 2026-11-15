@@ -519,3 +519,12 @@ Lightning invoices may be all lowercase or all uppercase. Mixed-case invoices ar
 Settlement also accepts the lowercase form Core Lightning stores for an uppercase invoice. Saved plans remain unchanged; payment hash, recipient, amounts and original attempt identity must still match.
 
 Route planning distinguishes unknown route-hint entry nodes from hint fee, delay and hop limits. It reports hint counts and saved limits; an unresolved route search is not proof that a fee limit was exceeded. Private paths may require multiple hinted hops to reach a public node. No payment is sent during planning.
+
+## Swap amounts
+
+There is no fixed per-swap BTC or XBT amount ceiling. Automatic local-controller
+permissions follow available channel liquidity and grow while idle when liquidity
+increases. Existing active swaps and manually approved permissions are not
+rewritten. Fees, route checks, market depth, recovery checks and signed 64-bit
+millisatoshi validation still apply. Update the controller and both Lightning
+node packages together to remove the old limits throughout the payment path.
